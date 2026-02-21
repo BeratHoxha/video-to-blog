@@ -1,4 +1,5 @@
-import { PenLine, Clock, Zap } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { PenLine, Clock, Zap, User, LogOut } from "lucide-react";
 
 interface SidebarProps {
   user: {
@@ -13,6 +14,29 @@ interface SidebarProps {
 }
 
 export function Sidebar({ user, currentView, onViewChange }: SidebarProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  function handleLogout() {
+    const csrf = (window as any).__RAILS_ENV__?.csrfToken ?? "";
+    fetch("/users/sign_out", {
+      method: "DELETE",
+      headers: { "X-CSRF-Token": csrf },
+    }).then(() => {
+      window.location.href = "/";
+    });
+  }
+
   const isFree = user.plan === "free";
   const wordsUsed = user.words_used_this_month;
   const wordsRemaining = user.words_remaining;
@@ -85,14 +109,39 @@ export function Sidebar({ user, currentView, onViewChange }: SidebarProps) {
         )}
 
         {/* User info */}
-        <div className="flex items-center gap-2.5 pt-2">
-          <div className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-300">
-            {user.name?.[0]?.toUpperCase() ?? "U"}
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-white truncate">{user.name}</p>
-            <p className="text-xs text-gray-600 capitalize">{user.plan} plan</p>
-          </div>
+        <div className="relative pt-2" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen((o) => !o)}
+            className="flex items-center gap-2.5 w-full rounded-lg hover:bg-gray-800/60 transition-colors px-1 py-1 -mx-1"
+          >
+            <div className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-300 shrink-0">
+              {user.name?.[0]?.toUpperCase() ?? "U"}
+            </div>
+            <div className="min-w-0 text-left">
+              <p className="text-xs font-medium text-white truncate">{user.name}</p>
+              <p className="text-xs text-gray-600 capitalize">{user.plan} plan</p>
+            </div>
+          </button>
+
+          {menuOpen && (
+            <div className="absolute bottom-full left-0 mb-1 w-44 rounded-lg border border-gray-800 bg-gray-900 shadow-lg py-1 z-50">
+              <button
+                disabled
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-xs text-gray-500 cursor-not-allowed"
+              >
+                <User size={13} />
+                Profile
+              </button>
+              <div className="my-1 border-t border-gray-800" />
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-xs text-gray-300 hover:bg-gray-800 hover:text-red-400 transition-colors"
+              >
+                <LogOut size={13} />
+                Log out
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </aside>
