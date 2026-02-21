@@ -1,1 +1,5 @@
-<div id="auth-root" data-page="sign-in"></div>
+<div
+  id="auth-root"
+  data-page="sign-in"
+  data-errors="<%= defined?(resource) ? resource.errors.full_messages.to_json : '[]' %>"
+></div>

@@ -3,6 +3,8 @@ import ReactDOM from "react-dom/client";
 import "./styles/globals.css";
 import { LandingPage } from "./pages/LandingPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { AuthPage } from "./pages/AuthPage";
+import { OnboardingPage } from "./pages/OnboardingPage";
 
 const env = (window as any).__RAILS_ENV__ ?? {};
 const currentUser = env.currentUser ?? null;
@@ -45,13 +47,28 @@ if (dashboardRoot) {
   mountPage("dashboard-root", "dashboard");
 }
 
-// Mount auth pages — re-use landing page shell
+// Mount onboarding page
+const onboardingRoot = document.getElementById("onboarding-root");
+if (onboardingRoot) {
+  ReactDOM.createRoot(onboardingRoot).render(
+    <React.StrictMode>
+      <OnboardingPage csrfToken={env.csrfToken} />
+    </React.StrictMode>
+  );
+}
+
+// Mount auth pages (sign-in / sign-up)
 const authRoot = document.getElementById("auth-root");
 if (authRoot) {
-  const page = authRoot.getAttribute("data-page") ?? "sign-in";
+  const mode = (authRoot.getAttribute("data-page") ?? "sign-in") as
+    | "sign-in"
+    | "sign-up";
+  const errors: string[] = JSON.parse(
+    authRoot.getAttribute("data-errors") ?? "[]"
+  );
   ReactDOM.createRoot(authRoot).render(
     <React.StrictMode>
-      <LandingPage authenticated={!!currentUser} />
+      <AuthPage mode={mode} errors={errors} csrfToken={env.csrfToken} />
     </React.StrictMode>
   );
 }
