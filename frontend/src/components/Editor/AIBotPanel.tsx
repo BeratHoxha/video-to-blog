@@ -12,7 +12,7 @@ const QUICK_PROMPTS = [
 
 interface AIBotPanelProps {
   selectedText: string;
-  onApply: (rewritten: string) => void;
+  onApply: (rewritten: string, remainingCalls: number | null) => void;
   onClose: () => void;
   callsRemaining: number | null;
 }
@@ -30,7 +30,7 @@ export function AIBotPanel({
     if (!prompt.trim()) return;
     const result = await rewrite(selectedText, prompt);
     if (result) {
-      onApply(result.result);
+      onApply(result.result, result.ai_bot_calls_remaining);
       setPrompt("");
     }
   };

@@ -2,43 +2,74 @@ require "rails_helper"
 
 RSpec.describe TranscriptionService do
   let(:youtube_url) { "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }
-  let(:non_youtube_url) { "https://example.com/video.mp4" }
 
   describe ".call" do
-    context "with a valid YouTube URL" do
-      let(:transcript_response) do
-        {
-          "events" => [
-            { "segs" => [{ "utf8" => "Hello " }] },
-            { "segs" => [{ "utf8" => "world" }] }
-          ]
-        }.to_json
-      end
-
+    context "with a YouTube URL" do
       before do
-        stub_request(:get, /youtube\.com\/api\/timedtext/)
-          .to_return(body: transcript_response, status: 200)
+        allow_any_instance_of(described_class)
+          .to receive(:download_youtube_audio_and_transcribe)
+          .and_return("OpenAI transcript")
       end
 
-      it "returns a transcript string" do
+      it "transcribes by extracting and sending audio to OpenAI" do
         result = described_class.call(source_url: youtube_url)
-        expect(result).to include("Hello")
+        expect(result).to eq("OpenAI transcript")
       end
     end
 
-    context "when YouTube transcript is unavailable" do
-      before do
-        stub_request(:get, /youtube\.com\/api\/timedtext/)
-          .to_raise(OpenURI::HTTPError.new("404", nil))
-        stub_request(:post, /api\.openai\.com/)
-          .to_return(
-            body: { text: "Whisper transcript" }.to_json,
-            status: 200
-          )
+    context "with an uploaded file path" do
+      let(:tempfile) do
+        file = Tempfile.new(["audio", ".mp3"])
+        file.write("audio-bytes")
+        file.rewind
+        file
       end
 
-      it "falls back to Whisper" do
-        expect(described_class.call(source_url: youtube_url)).to eq("Whisper transcript")
+      after do
+        tempfile.close
+        tempfile.unlink
+      end
+
+      before do
+        allow(OpenaiClientService)
+          .to receive(:transcribe)
+          .and_return("File transcript")
+      end
+
+      it "uses gpt-4o-mini-transcribe" do
+        result = described_class.call(file_path: tempfile.path)
+
+        expect(result).to eq("File transcript")
+        expect(OpenaiClientService).to have_received(:transcribe).with(
+          file_path: tempfile.path,
+          model: "gpt-4o-mini-transcribe"
+        )
+      end
+    end
+
+    context "when OpenAI returns rate limit" do
+      let(:tempfile) do
+        file = Tempfile.new(["audio", ".mp3"])
+        file.write("audio-bytes")
+        file.rewind
+        file
+      end
+
+      after do
+        tempfile.close
+        tempfile.unlink
+      end
+
+      before do
+        allow(OpenaiClientService)
+          .to receive(:transcribe)
+          .and_raise(OpenaiClientService::RateLimitError, "Too many requests")
+      end
+
+      it "raises TranscriptionError with clear message" do
+        expect {
+          described_class.call(file_path: tempfile.path)
+        }.to raise_error(TranscriptionService::TranscriptionError, /rate limit/i)
       end
     end
 

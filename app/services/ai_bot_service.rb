@@ -1,6 +1,9 @@
 class AIBotService
   class AIBotLimitError < StandardError; end
 
+  PRIMARY_MODEL = "gpt-4.1-mini".freeze
+  FALLBACK_MODEL = "gpt-4o-mini".freeze
+
   def self.call(selection:, prompt:, user:)
     new(selection: selection, prompt: prompt, user: user).call
   end
@@ -23,24 +26,16 @@ class AIBotService
   private
 
   def rewrite_with_openai
-    client = OpenAI::Client.new(access_token: ENV.fetch("OPENAI_API_KEY", "test-key"))
-
-    response = client.chat(
-      parameters: {
-        model: "gpt-4o",
-        messages: [
-          { role: "system", content: system_prompt },
-          { role: "user", content: user_message }
-        ],
-        temperature: 0.7
-      }
+    OpenaiClientService.chat_with_fallback(
+      primary_model: PRIMARY_MODEL,
+      fallback_model: FALLBACK_MODEL,
+      temperature: 0.7,
+      messages: [
+        { role: "system", content: system_prompt },
+        { role: "user", content: user_message }
+      ]
     )
-
-    content = response.dig("choices", 0, "message", "content")
-    raise "OpenAI returned empty content" if content.blank?
-
-    content
-  rescue Faraday::Error => e
+  rescue OpenaiClientService::OpenAIServiceError => e
     raise "AI Bot API error: #{e.message}"
   end
 

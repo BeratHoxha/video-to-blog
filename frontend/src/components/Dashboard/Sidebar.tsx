@@ -40,6 +40,8 @@ export function Sidebar({ user, currentView, onViewChange }: SidebarProps) {
   const isFree = user.plan === "free";
   const wordsUsed = user.words_used_this_month;
   const wordsRemaining = user.words_remaining;
+  const aiRewritesUsed =
+    user.ai_bot_calls_remaining !== null ? 10 - user.ai_bot_calls_remaining : null;
   const wordTotal = isFree ? 2000 : null;
   const wordPercent = wordTotal ? Math.min((wordsUsed / wordTotal) * 100, 100) : 0;
 
@@ -89,9 +91,9 @@ export function Sidebar({ user, currentView, onViewChange }: SidebarProps) {
 
         {isFree && user.ai_bot_calls_remaining !== null && (
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500">AI rewrites</span>
+            <span className="text-xs text-gray-500">AI rewrites used</span>
             <span className="text-xs font-medium text-gray-300">
-              {user.ai_bot_calls_remaining} / 10 left
+              {aiRewritesUsed} / 10
             </span>
           </div>
         )}

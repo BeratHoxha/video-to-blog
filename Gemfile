@@ -53,6 +53,7 @@ end
 
 group :development do
   gem "web-console"
+  gem "byebug"
 end
 
 group :test do

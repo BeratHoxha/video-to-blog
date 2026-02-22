@@ -32,14 +32,28 @@ interface ArticleEditorProps {
   article: Article;
   user: User;
   animatedContent?: string;
+  onUsageUpdate?: (usage: {
+    ai_bot_calls_remaining?: number | null;
+    words_used_this_month?: number;
+    words_remaining?: number | null;
+  }) => void;
 }
 
-export function ArticleEditor({ article, user, animatedContent }: ArticleEditorProps) {
+export function ArticleEditor({
+  article,
+  user,
+  animatedContent,
+  onUsageUpdate,
+}: ArticleEditorProps) {
   const [showAIBot, setShowAIBot] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const [selectionRange, setSelectionRange] = useState<{ from: number; to: number } | null>(null);
   const [copied, setCopied] = useState(false);
   const [callsRemaining, setCallsRemaining] = useState(user.ai_bot_calls_remaining);
+
+  useEffect(() => {
+    setCallsRemaining(user.ai_bot_calls_remaining);
+  }, [user.ai_bot_calls_remaining, article.id]);
 
   const editor = useEditor({
     extensions: [
@@ -67,11 +81,45 @@ export function ArticleEditor({ article, user, animatedContent }: ArticleEditorP
     },
   });
 
-  // Update content when animated content changes
+  // Animate newly generated articles word-by-word before applying full HTML content.
   useEffect(() => {
-    if (animatedContent && editor) {
+    if (!animatedContent || !editor) return;
+
+    const htmlToText = (html: string) => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      return (doc.body.textContent || "").replace(/\s+/g, " ").trim();
+    };
+
+    const escapeHtml = (text: string) =>
+      text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
+    const words = htmlToText(animatedContent).split(" ").filter(Boolean);
+    if (words.length === 0) {
       editor.commands.setContent(animatedContent, false);
+      return;
     }
+
+    editor.commands.setContent("", false);
+    let wordIndex = 0;
+    const interval = window.setInterval(() => {
+      wordIndex += Math.min(4, words.length - wordIndex);
+
+      const chunk = words.slice(0, wordIndex).join(" ");
+      editor.commands.setContent(`<p>${escapeHtml(chunk)}</p>`, false);
+
+      if (wordIndex >= words.length) {
+        window.clearInterval(interval);
+        editor.commands.setContent(animatedContent, false);
+      }
+    }, 20);
+
+    return () => window.clearInterval(interval);
   }, [animatedContent, editor]);
 
   const handleApplyRewrite = useCallback(
@@ -211,9 +259,10 @@ export function ArticleEditor({ article, user, animatedContent }: ArticleEditorP
         {showAIBot && selectedText && (
           <AIBotPanel
             selectedText={selectedText}
-            onApply={(rewritten) => {
+            onApply={(rewritten, remainingCalls) => {
               handleApplyRewrite(rewritten);
-              setCallsRemaining((prev) => (prev !== null ? prev - 1 : null));
+              setCallsRemaining(remainingCalls);
+              onUsageUpdate?.({ ai_bot_calls_remaining: remainingCalls });
             }}
             onClose={() => setShowAIBot(false)}
             callsRemaining={callsRemaining}

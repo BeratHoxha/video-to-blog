@@ -30,6 +30,7 @@ interface DashboardPageProps {
 }
 
 export function DashboardPage({ user }: DashboardPageProps) {
+  const [userState, setUserState] = useState<User>(user);
   const [currentView, setCurrentView] = useState<"new" | "history">("new");
   const [pendingArticleId, setPendingArticleId] = useState<number | null>(null);
   const [currentArticle, setCurrentArticle] = useState<Article | null>(null);
@@ -59,6 +60,18 @@ export function DashboardPage({ user }: DashboardPageProps) {
       setIsGenerating(false);
       setPendingArticleId(null);
       if (data.content) {
+        if (userState.plan === "free") {
+          const generatedWords = data.word_count ?? 0;
+          setUserState((prev) => {
+            const wordsUsed = prev.words_used_this_month + generatedWords;
+            return {
+              ...prev,
+              words_used_this_month: wordsUsed,
+              words_remaining: Math.max(0, 2000 - wordsUsed),
+            };
+          });
+        }
+
         const article: Article = {
           id: data.id,
           title: data.title ?? "Generated Article",
@@ -78,7 +91,7 @@ export function DashboardPage({ user }: DashboardPageProps) {
   return (
     <div className="flex h-screen bg-gray-950 overflow-hidden">
       <Sidebar
-        user={user}
+        user={userState}
         currentView={currentView}
         onViewChange={(view) => {
           setCurrentView(view);
@@ -95,8 +108,11 @@ export function DashboardPage({ user }: DashboardPageProps) {
         ) : currentArticle ? (
           <ArticleEditor
             article={currentArticle}
-            user={user}
+            user={userState}
             animatedContent={animatedContent}
+            onUsageUpdate={(usage) => {
+              setUserState((prev) => ({ ...prev, ...usage }));
+            }}
           />
         ) : (
           <div className="flex-1 overflow-y-auto">
@@ -113,7 +129,7 @@ export function DashboardPage({ user }: DashboardPageProps) {
                 </p>
                 <VideoToBlogEngine
                   authenticated={true}
-                  userTier={user.plan}
+                  userTier={userState.plan}
                   onArticleGenerated={handleArticleGenerated}
                 />
               </div>

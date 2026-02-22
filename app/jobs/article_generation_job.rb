@@ -15,12 +15,16 @@ class ArticleGenerationJob < ApplicationJob
 
     title = extract_title(content) || "Untitled Article"
 
+    word_count = content.gsub(/<[^>]+>/, " ").split.length
+
     article.update!(
       content: content,
       title: title,
-      word_count: content.gsub(/<[^>]+>/, " ").split.length,
+      word_count: word_count,
       status: :complete
     )
+
+    increment_user_word_usage(article, word_count)
   rescue TranscriptionService::TranscriptionError,
          ArticleGenerationService::GenerationError,
          StandardError => e
@@ -43,5 +47,11 @@ class ArticleGenerationJob < ApplicationJob
   def extract_title(html)
     doc = Nokogiri::HTML(html)
     doc.at("h1")&.text&.strip
+  end
+
+  def increment_user_word_usage(article, word_count)
+    return unless article.user&.free?
+
+    article.user.increment_words_used!(word_count)
   end
 end

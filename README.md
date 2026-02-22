@@ -26,6 +26,8 @@ Make sure the following are installed before you begin:
 - **Yarn** — `npm install -g yarn`
 - **PostgreSQL** 14+ — `brew install postgresql@14`
 - **Redis** — `brew install redis`
+- **yt-dlp** — `brew install yt-dlp` (used to extract audio from YouTube videos without captions)
+- **ffmpeg** — `brew install ffmpeg` (required by yt-dlp to convert audio to mp3)
 
 ---
 

@@ -33,6 +33,9 @@ class ArticleGenerationService
       "with multiple subsections."
   }.freeze
 
+  PRIMARY_MODEL = "gpt-4.1".freeze
+  FALLBACK_MODEL = "gpt-4o".freeze
+
   def self.call(transcript:, options:, word_limit: nil)
     new(transcript: transcript, options: options, word_limit: word_limit).call
   end
@@ -44,21 +47,15 @@ class ArticleGenerationService
   end
 
   def call
-    client = OpenAI::Client.new(access_token: ENV.fetch("OPENAI_API_KEY", "test-key"))
-
-    response = client.chat(
-      parameters: {
-        model: "gpt-4o",
-        messages: [
-          { role: "system", content: system_prompt },
-          { role: "user", content: user_prompt }
-        ],
-        temperature: 0.7
-      }
+    content = OpenaiClientService.chat_with_fallback(
+      primary_model: PRIMARY_MODEL,
+      fallback_model: FALLBACK_MODEL,
+      temperature: 0.7,
+      messages: [
+        { role: "system", content: system_prompt },
+        { role: "user", content: user_prompt }
+      ]
     )
-
-    content = response.dig("choices", 0, "message", "content")
-    raise "OpenAI returned empty content" if content.blank?
 
     apply_word_limit(content)
   end
@@ -82,12 +79,19 @@ class ArticleGenerationService
       You are an expert content writer. Convert the provided video transcript
       into a well-structured, engaging blog article.
 
+      Constraints:
+      - Use only information contained in the transcript.
+      - Do not invent facts or add unsupported details.
+      - Produce publish-ready copy only.
+      - Generate a clear title and structured sections with headings.
+
       #{instructions.join("\n")}
 
       Format the output as HTML with proper heading tags (h1, h2, h3),
       paragraphs, and lists where appropriate.
       Start with an H1 title derived from the content.
       Do not include any markdown — use HTML only.
+      Return only the final article content.
     PROMPT
   end
 

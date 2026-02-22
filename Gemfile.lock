@@ -103,6 +103,8 @@ GEM
     bootsnap (1.23.0)
       msgpack (~> 1.2)
     builder (3.3.0)
+    byebug (13.0.0)
+      reline (>= 0.6.0)
     caracal (1.4.1)
       nokogiri (~> 1.6)
       rubyzip (~> 1.1)
@@ -430,6 +432,7 @@ PLATFORMS
 DEPENDENCIES
   aws-sdk-s3
   bootsnap
+  byebug
   caracal
   caxlsx
   caxlsx_rails
@@ -488,6 +491,7 @@ CHECKSUMS
   bindex (0.8.1) sha256=7b1ecc9dc539ed8bccfc8cb4d2732046227b09d6f37582ff12e50a5047ceb17e
   bootsnap (1.23.0) sha256=c1254f458d58558b58be0f8eb8f6eec2821456785b7cdd1e16248e2020d3f214
   builder (3.3.0) sha256=497918d2f9dca528fdca4b88d84e4ef4387256d984b8154e9d5d3fe5a9c8835f
+  byebug (13.0.0) sha256=d2263efe751941ca520fa29744b71972d39cbc41839496706f5d9b22e92ae05d
   caracal (1.4.1) sha256=230ff744e79cd8d9aa449bb350aab986c29bbc6b489d54021ac99add6bb3fcfb
   caxlsx (4.2.0) sha256=043e832e912010e36357ed7f65b24c49e09a764b172e27f21aff7a55db8bc8f0
   caxlsx_rails (0.6.4) sha256=27e1ebb4617473f49a7956214e352b485beb080d590769ef5a826c410c7d2276

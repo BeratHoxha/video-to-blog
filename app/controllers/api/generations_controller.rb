@@ -22,7 +22,8 @@ module Api
       )
 
       user_tier = current_user&.plan || "guest"
-      ArticleGenerationJob.perform_later(article.id, user_tier: user_tier)
+      # TODO: Run this asynchronously with ActiveJob and Sidekiq
+      ArticleGenerationJob.perform_now(article.id, user_tier: user_tier)
 
       render json: { article_id: article.id, status: "processing" },
              status: :created
