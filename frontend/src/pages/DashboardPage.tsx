@@ -154,6 +154,10 @@ export function DashboardPage({ user }: DashboardPageProps) {
                   userTier={userState.plan}
                   wordsRemaining={userState.words_remaining}
                   onArticleGenerated={handleArticleGenerated}
+                  onUpgrade={() => {
+                    setProfileInitialTab("plan");
+                    setCurrentView("profile");
+                  }}
                 />
               </div>
             )}

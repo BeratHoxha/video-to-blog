@@ -10,6 +10,7 @@ interface VideoToBlogEngineProps {
   wordsRemaining?: number | null;
   onArticleGenerated?: (articleId: number) => void;
   onGuestGenerated?: (articleId: number) => void;
+  onUpgrade?: () => void;
 }
 
 type InputMode = "url" | "file";
@@ -28,6 +29,7 @@ export function VideoToBlogEngine({
   wordsRemaining,
   onArticleGenerated,
   onGuestGenerated,
+  onUpgrade,
 }: VideoToBlogEngineProps) {
   const isOverLimit = typeof wordsRemaining === "number" && wordsRemaining <= 0;
   const [inputMode, setInputMode] = useState<InputMode>("url");
@@ -127,12 +129,21 @@ export function VideoToBlogEngine({
       {isOverLimit && (
         <div className="mb-5 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
           <span className="mt-0.5 text-amber-400">⚠</span>
-          <div className="text-sm">
+          <div className="flex-1 text-sm">
             <p className="font-medium text-amber-400">Monthly word limit reached</p>
             <p className="text-amber-400/70 mt-0.5">
               You've used all 2,000 free words this month. Upgrade your plan to keep generating articles.
             </p>
           </div>
+          {onUpgrade && (
+            <button
+              type="button"
+              onClick={onUpgrade}
+              className="shrink-0 self-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-white transition-colors"
+            >
+              Upgrade
+            </button>
+          )}
         </div>
       )}
 

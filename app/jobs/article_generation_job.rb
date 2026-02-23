@@ -15,7 +15,8 @@ class ArticleGenerationJob < ApplicationJob
       word_limit: word_limit
     )
 
-    title = extract_title(content) || "Untitled Article"
+    title   = extract_title(content) || "Untitled Article"
+    content = strip_leading_h1(content)
 
     word_count = content.gsub(/<[^>]+>/, " ").split.length
 
@@ -48,6 +49,12 @@ class ArticleGenerationJob < ApplicationJob
   def extract_title(html)
     doc = Nokogiri::HTML(html)
     doc.at("h1")&.text&.strip
+  end
+
+  def strip_leading_h1(html)
+    doc = Nokogiri::HTML.fragment(html)
+    doc.at("h1")&.remove
+    doc.to_html
   end
 
   def increment_user_word_usage(article, word_count)
