@@ -21,5 +21,7 @@ Rails.application.routes.draw do
     resources :generations, only: [:create]
     post "/ai_bot", to: "ai_bot#rewrite"
     post "/newsletter", to: "newsletter#subscribe"
+    patch "/users/me",   to: "users#update_profile"
+    patch "/users/plan", to: "users#update_plan"
   end
 end

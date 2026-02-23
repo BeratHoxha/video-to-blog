@@ -18,12 +18,13 @@ class OpenaiClientService
     "audio file"
   ].freeze
 
-  def self.chat_with_fallback(messages:, primary_model:, fallback_model:, temperature: 0.7)
+  def self.chat_with_fallback(messages:, primary_model:, fallback_model:, temperature: 0.7, max_tokens: nil)
     new.chat_with_fallback(
       messages: messages,
       primary_model: primary_model,
       fallback_model: fallback_model,
-      temperature: temperature
+      temperature: temperature,
+      max_tokens: max_tokens
     )
   end
 
@@ -37,15 +38,12 @@ class OpenaiClientService
     )
   end
 
-  def chat_with_fallback(messages:, primary_model:, fallback_model:, temperature: 0.7)
+  def chat_with_fallback(messages:, primary_model:, fallback_model:, temperature: 0.7, max_tokens: nil)
     with_model_fallback(primary_model: primary_model, fallback_model: fallback_model) do |model|
-      response = @client.chat(
-        parameters: {
-          model: model,
-          messages: messages,
-          temperature: temperature
-        }
-      )
+      parameters = { model: model, messages: messages, temperature: temperature }
+      parameters[:max_tokens] = max_tokens if max_tokens
+
+      response = @client.chat(parameters: parameters)
 
       content = response.dig("choices", 0, "message", "content")
       raise OpenAIServiceError, "OpenAI returned empty content" if content.blank?

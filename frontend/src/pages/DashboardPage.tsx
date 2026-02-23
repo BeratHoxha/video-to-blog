@@ -5,6 +5,7 @@ import { VideoToBlogEngine } from "@/components/Engine/VideoToBlogEngine";
 import { ArticleEditor } from "@/components/Editor/ArticleEditor";
 import { TypewriterText } from "@/components/shared/TypewriterText";
 import { useGenerationPoller } from "@/hooks/useGenerationPoller";
+import { ProfilePage } from "@/pages/ProfilePage";
 import { Loader2 } from "lucide-react";
 
 interface User {
@@ -12,6 +13,7 @@ interface User {
   name: string;
   email: string;
   plan: string;
+  provider?: string | null;
   words_remaining: number | null;
   words_used_this_month: number;
   ai_bot_calls_remaining: number | null;
@@ -23,6 +25,7 @@ interface Article {
   title: string;
   content: string;
   word_count: number;
+  output_format?: string;
 }
 
 interface DashboardPageProps {
@@ -31,11 +34,14 @@ interface DashboardPageProps {
 
 export function DashboardPage({ user }: DashboardPageProps) {
   const [userState, setUserState] = useState<User>(user);
-  const [currentView, setCurrentView] = useState<"new" | "history">("new");
+  const [currentView, setCurrentView] = useState<"new" | "history" | "profile">("new");
+  const [profileInitialTab, setProfileInitialTab] = useState<"account" | "plan">("account");
   const [pendingArticleId, setPendingArticleId] = useState<number | null>(null);
   const [currentArticle, setCurrentArticle] = useState<Article | null>(null);
   const [animatedContent, setAnimatedContent] = useState<string | undefined>();
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const csrfToken = (window as any).__RAILS_ENV__?.csrfToken ?? "";
 
   const handleArticleGenerated = (articleId: number) => {
     setPendingArticleId(articleId);
@@ -52,6 +58,10 @@ export function DashboardPage({ user }: DashboardPageProps) {
         setCurrentView("new");
       })
       .catch(console.error);
+  }, []);
+
+  const handleUserUpdate = useCallback((updatedUser: User) => {
+    setUserState((prev) => ({ ...prev, ...updatedUser }));
   }, []);
 
   useGenerationPoller({
@@ -77,6 +87,7 @@ export function DashboardPage({ user }: DashboardPageProps) {
           title: data.title ?? "Generated Article",
           content: data.content,
           word_count: data.word_count ?? 0,
+          output_format: data.output_format,
         };
         setCurrentArticle(article);
         setAnimatedContent(data.content);
@@ -100,11 +111,22 @@ export function DashboardPage({ user }: DashboardPageProps) {
             setAnimatedContent(undefined);
           }
         }}
+        onPlanUpgrade={() => {
+          setProfileInitialTab("plan");
+          setCurrentView("profile");
+        }}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {currentView === "history" ? (
           <ArticleHistory onArticleOpen={handleArticleOpen} />
+        ) : currentView === "profile" ? (
+          <ProfilePage
+            user={userState}
+            csrfToken={csrfToken}
+            initialTab={profileInitialTab}
+            onUserUpdate={handleUserUpdate}
+          />
         ) : currentArticle ? (
           <ArticleEditor
             article={currentArticle}
@@ -130,6 +152,7 @@ export function DashboardPage({ user }: DashboardPageProps) {
                 <VideoToBlogEngine
                   authenticated={true}
                   userTier={userState.plan}
+                  wordsRemaining={userState.words_remaining}
                   onArticleGenerated={handleArticleGenerated}
                 />
               </div>

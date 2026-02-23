@@ -1,6 +1,6 @@
 class ArticleGenerationService
   WORD_LIMITS = {
-    guest: 300,
+    guest: 150,
     free: 2000,
     basic: nil,
     premium: nil
@@ -47,10 +47,16 @@ class ArticleGenerationService
   end
 
   def call
+    # When a word limit is set, cap max_tokens so the model stops early
+    # rather than generating a full article and truncating after.
+    # HTML tags add overhead (~2x tokens vs plain words).
+    max_tokens = @word_limit ? (@word_limit * 2) : nil
+
     content = OpenaiClientService.chat_with_fallback(
       primary_model: PRIMARY_MODEL,
       fallback_model: FALLBACK_MODEL,
       temperature: 0.7,
+      max_tokens: max_tokens,
       messages: [
         { role: "system", content: system_prompt },
         { role: "user", content: user_prompt }

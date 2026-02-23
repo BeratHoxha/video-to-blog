@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 interface VideoToBlogEngineProps {
   authenticated: boolean;
   userTier: string | null;
+  wordsRemaining?: number | null;
   onArticleGenerated?: (articleId: number) => void;
   onGuestGenerated?: (articleId: number) => void;
 }
@@ -24,9 +25,11 @@ interface FormState {
 export function VideoToBlogEngine({
   authenticated,
   userTier,
+  wordsRemaining,
   onArticleGenerated,
   onGuestGenerated,
 }: VideoToBlogEngineProps) {
+  const isOverLimit = typeof wordsRemaining === "number" && wordsRemaining <= 0;
   const [inputMode, setInputMode] = useState<InputMode>("url");
   const [url, setUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -53,6 +56,11 @@ export function VideoToBlogEngine({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (isOverLimit) {
+      setError("You've used all your words for this month. Upgrade to keep generating.");
+      return;
+    }
 
     if (!url && !file) {
       setError("Please provide a video URL or upload a file.");
@@ -116,6 +124,18 @@ export function VideoToBlogEngine({
         ))}
       </div>
 
+      {isOverLimit && (
+        <div className="mb-5 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+          <span className="mt-0.5 text-amber-400">⚠</span>
+          <div className="text-sm">
+            <p className="font-medium text-amber-400">Monthly word limit reached</p>
+            <p className="text-amber-400/70 mt-0.5">
+              You've used all 2,000 free words this month. Upgrade your plan to keep generating articles.
+            </p>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Input */}
         {inputMode === "url" ? (
@@ -139,7 +159,7 @@ export function VideoToBlogEngine({
 
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isOverLimit}
           className="w-full h-12 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60
                      text-white font-semibold rounded-lg transition-colors
                      flex items-center justify-center gap-2 text-sm"

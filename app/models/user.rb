@@ -82,6 +82,7 @@ class User < ApplicationRecord
       name: name,
       email: email,
       plan: plan,
+      provider: provider,
       words_remaining: words_remaining,
       words_used_this_month: words_used_this_month,
       ai_bot_calls_remaining: ai_bot_calls_remaining,

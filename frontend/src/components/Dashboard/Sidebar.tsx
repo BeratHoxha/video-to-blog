@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { PenLine, Clock, Zap, User, LogOut } from "lucide-react";
+import { PenLine, Clock, Zap, Settings, LogOut } from "lucide-react";
 
 interface SidebarProps {
   user: {
@@ -9,11 +9,12 @@ interface SidebarProps {
     words_remaining: number | null;
     ai_bot_calls_remaining: number | null;
   };
-  currentView: "new" | "history";
-  onViewChange: (view: "new" | "history") => void;
+  currentView: "new" | "history" | "profile";
+  onViewChange: (view: "new" | "history" | "profile") => void;
+  onPlanUpgrade: () => void;
 }
 
-export function Sidebar({ user, currentView, onViewChange }: SidebarProps) {
+export function Sidebar({ user, currentView, onViewChange, onPlanUpgrade }: SidebarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -99,15 +100,15 @@ export function Sidebar({ user, currentView, onViewChange }: SidebarProps) {
         )}
 
         {isFree && (
-          <a
-            href="#pricing"
+          <button
+            onClick={onPlanUpgrade}
             className="flex items-center gap-2 w-full py-2 px-3 rounded-lg
                        bg-emerald-500/10 border border-emerald-500/20 text-xs
-                       text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                       text-emerald-400 hover:bg-emerald-500/20 transition-colors cursor-pointer"
           >
             <Zap size={12} />
             Unlock unlimited words
-          </a>
+          </button>
         )}
 
         {/* User info */}
@@ -128,10 +129,10 @@ export function Sidebar({ user, currentView, onViewChange }: SidebarProps) {
           {menuOpen && (
             <div className="absolute bottom-full left-0 mb-1 w-44 rounded-lg border border-gray-800 bg-gray-900 shadow-lg py-1 z-50">
               <button
-                disabled
-                className="flex items-center gap-2.5 w-full px-3 py-2 text-xs text-gray-500 cursor-not-allowed"
+                onClick={() => { setMenuOpen(false); onViewChange("profile"); }}
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-xs text-gray-300 hover:bg-gray-800 transition-colors"
               >
-                <User size={13} />
+                <Settings size={13} />
                 Profile
               </button>
               <div className="my-1 border-t border-gray-800" />

@@ -21,7 +21,7 @@ module Api
       authenticate_user_api!
       return unless current_user
 
-      format = params[:format].to_s.downcase
+      format = params[:file_format].to_s.downcase
       allowed = %w[pdf docx pptx]
 
       unless allowed.include?(format)

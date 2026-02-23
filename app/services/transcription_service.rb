@@ -9,13 +9,14 @@ class TranscriptionService
   YT_DLP_BIN = `which yt-dlp`.strip.freeze
   FFMPEG_BIN = `which ffmpeg`.strip.freeze
 
-  def self.call(source_url: nil, file_path: nil)
-    new(source_url: source_url, file_path: file_path).call
+  def self.call(source_url: nil, file_path: nil, trim_seconds: nil)
+    new(source_url: source_url, file_path: file_path, trim_seconds: trim_seconds).call
   end
 
-  def initialize(source_url: nil, file_path: nil)
-    @source_url = source_url
-    @file_path  = file_path
+  def initialize(source_url: nil, file_path: nil, trim_seconds: nil)
+    @source_url   = source_url
+    @file_path    = file_path
+    @trim_seconds = trim_seconds
   end
 
   def call
@@ -24,7 +25,10 @@ class TranscriptionService
     elsif @source_url.present?
       download_and_transcribe(@source_url)
     elsif @file_path.present?
-      transcribe_file_with_openai(@file_path)
+      # For uploaded files, route through a tmpdir so maybe_trim can write there.
+      Dir.mktmpdir("trim") do |tmpdir|
+        transcribe_file_with_openai(maybe_trim(@file_path, tmpdir))
+      end
     else
       raise TranscriptionError, "No source URL or file provided"
     end
@@ -36,6 +40,26 @@ class TranscriptionService
     return false if url.blank?
 
     YOUTUBE_PATTERN.match?(url)
+  end
+
+  # Trim audio to @trim_seconds using ffmpeg (stream-copy, no re-encode).
+  # Returns the trimmed path on success, or the original path if trimming fails.
+  def maybe_trim(audio_path, tmpdir)
+    return audio_path unless @trim_seconds&.positive?
+
+    ext     = File.extname(audio_path).presence || ".mp3"
+    trimmed = File.join(tmpdir, "trimmed#{ext}")
+
+    success = system(
+      FFMPEG_BIN, "-y",
+      "-i", audio_path,
+      "-t", @trim_seconds.to_s,
+      "-c", "copy",
+      trimmed,
+      out: File::NULL, err: File::NULL
+    )
+
+    (success && File.exist?(trimmed) && File.size(trimmed) > 0) ? trimmed : audio_path
   end
 
   # Use yt-dlp to extract audio from a YouTube URL, then transcribe with OpenAI.
@@ -60,7 +84,7 @@ class TranscriptionService
       audio_file = Dir.glob(File.join(tmpdir, "audio.*")).first
       raise TranscriptionError, "Audio file not found after yt-dlp download" unless audio_file
 
-      transcribe_file_with_openai(audio_file)
+      transcribe_file_with_openai(maybe_trim(audio_file, tmpdir))
     end
   rescue TranscriptionError
     raise
@@ -68,16 +92,18 @@ class TranscriptionService
     raise TranscriptionError, "YouTube audio download failed: #{e.message}"
   end
 
-  # Downloads a remote audio/video file to a tempfile, then sends to OpenAI.
-  # Only used for non-YouTube direct file URLs.
+  # Downloads a remote audio/video file, optionally trims it, then transcribes.
   def download_and_transcribe(url)
     ext = File.extname(URI.parse(url).path).presence || ".mp4"
 
-    Tempfile.create(["audio", ext]) do |tmpfile|
-      tmpfile.binmode
-      URI.open(url, "rb", read_timeout: 60) { |f| tmpfile.write(f.read) }
-      tmpfile.rewind
-      transcribe_file_with_openai(tmpfile.path)
+    Dir.mktmpdir("audio") do |tmpdir|
+      audio_path = File.join(tmpdir, "audio#{ext}")
+
+      File.open(audio_path, "wb") do |f|
+        URI.open(url, "rb", read_timeout: 60) { |remote| f.write(remote.read) }
+      end
+
+      transcribe_file_with_openai(maybe_trim(audio_path, tmpdir))
     end
   rescue OpenURI::HTTPError, SocketError => e
     raise TranscriptionError, "Could not download audio file: #{e.message}"

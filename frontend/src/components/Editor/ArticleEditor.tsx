@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
+import type { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import Placeholder from "@tiptap/extension-placeholder";
-import { AnimatePresence } from "framer-motion";
 import { AIBotPanel } from "./AIBotPanel";
 import {
   Bold,
@@ -12,8 +12,8 @@ import {
   Heading3,
   Copy,
   Download,
-  Sparkles,
   Check,
+  Loader2,
 } from "lucide-react";
 
 interface Article {
@@ -21,6 +21,7 @@ interface Article {
   title: string;
   content: string;
   word_count: number;
+  output_format?: string;
 }
 
 interface User {
@@ -39,16 +40,75 @@ interface ArticleEditorProps {
   }) => void;
 }
 
+// Remove a leading <h1> from HTML content so it isn't duplicated below the
+// hardcoded title rendered above the editor.
+function stripLeadingH1(html: string): string {
+  return html.replace(/^\s*<h1[^>]*>.*?<\/h1>\s*/is, "");
+}
+
+function selectSentenceAt(editor: Editor, pos: number) {
+  const { doc } = editor.state;
+  const $pos = doc.resolve(pos);
+
+  // Walk up to find the nearest block ancestor (paragraph, heading, etc.)
+  let depth = $pos.depth;
+  while (depth > 0 && !$pos.node(depth).isBlock) {
+    depth--;
+  }
+  if (depth === 0) return;
+
+  const blockStart = $pos.start(depth);
+  const blockEnd = $pos.end(depth);
+  if (blockStart >= blockEnd) return;
+
+  const blockText = doc.textBetween(blockStart, blockEnd, "");
+  const offsetInBlock = pos - blockStart;
+
+  // Search backwards for the start of the sentence (., !, ?)
+  let sentStart = 0;
+  for (let i = offsetInBlock - 1; i >= 0; i--) {
+    if (/[.!?]/.test(blockText[i])) {
+      let j = i + 1;
+      while (j < blockText.length && blockText[j] === " ") j++;
+      sentStart = j;
+      break;
+    }
+  }
+
+  // Search forwards for the end of the sentence (., !, ?)
+  let sentEnd = blockText.length;
+  for (let i = offsetInBlock; i < blockText.length; i++) {
+    if (/[.!?]/.test(blockText[i])) {
+      sentEnd = i + 1;
+      break;
+    }
+  }
+
+  const raw = blockText.slice(sentStart, sentEnd);
+  const trimmed = raw.trim();
+  if (!trimmed) return;
+
+  const leadingSpaces = raw.length - raw.trimStart().length;
+  const trailingSpaces = raw.length - raw.trimEnd().length;
+
+  const from = blockStart + sentStart + leadingSpaces;
+  const to = blockStart + sentEnd - trailingSpaces;
+
+  if (from < to) {
+    editor.chain().setTextSelection({ from, to }).run();
+  }
+}
+
 export function ArticleEditor({
   article,
   user,
   animatedContent,
   onUsageUpdate,
 }: ArticleEditorProps) {
-  const [showAIBot, setShowAIBot] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const [selectionRange, setSelectionRange] = useState<{ from: number; to: number } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [callsRemaining, setCallsRemaining] = useState(user.ai_bot_calls_remaining);
 
   useEffect(() => {
@@ -61,7 +121,7 @@ export function ArticleEditor({
       Highlight,
       Placeholder.configure({ placeholder: "Your article will appear here..." }),
     ],
-    content: animatedContent ?? article.content ?? "",
+    content: stripLeadingH1(animatedContent ?? article.content ?? ""),
     editorProps: {
       attributes: {
         class: "tiptap min-h-[400px] focus:outline-none text-lg",
@@ -76,10 +136,20 @@ export function ArticleEditor({
       } else {
         setSelectedText("");
         setSelectionRange(null);
-        setShowAIBot(false);
       }
     },
   });
+
+  // Single-click on a sentence selects it and sends it to the AI panel.
+  const handleEditorClick = useCallback(() => {
+    if (!editor) return;
+    requestAnimationFrame(() => {
+      const { from, to } = editor.state.selection;
+      if (from === to) {
+        selectSentenceAt(editor, from);
+      }
+    });
+  }, [editor]);
 
   // Animate newly generated articles word-by-word before applying full HTML content.
   useEffect(() => {
@@ -115,7 +185,7 @@ export function ArticleEditor({
 
       if (wordIndex >= words.length) {
         window.clearInterval(interval);
-        editor.commands.setContent(animatedContent, false);
+        editor.commands.setContent(stripLeadingH1(animatedContent), false);
       }
     }, 20);
 
@@ -133,8 +203,8 @@ export function ArticleEditor({
         .insertContentAt(selectionRange.from, rewritten)
         .run();
 
-      setShowAIBot(false);
       setSelectedText("");
+      setSelectionRange(null);
     },
     [editor, selectionRange]
   );
@@ -147,15 +217,20 @@ export function ArticleEditor({
   };
 
   const handleExport = async (format: string) => {
-    const res = await fetch(`/api/articles/${article.id}/export?format=${format}`);
-    if (!res.ok) return;
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${article.title}.${format}`;
-    a.click();
-    URL.revokeObjectURL(url);
+    setIsDownloading(true);
+    try {
+      const res = await fetch(`/api/articles/${article.id}/export?file_format=${format}`);
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${article.title}.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   if (!editor) return null;
@@ -196,19 +271,6 @@ export function ArticleEditor({
 
           <div className="flex-1" />
 
-          {/* AI Bot trigger (shows when text is selected) */}
-          {selectedText && (
-            <button
-              onClick={() => setShowAIBot(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium
-                         bg-emerald-500/20 border border-emerald-500/40 text-emerald-400
-                         rounded-lg hover:bg-emerald-500/30 transition-colors"
-            >
-              <Sparkles size={12} />
-              Rewrite with AI
-            </button>
-          )}
-
           <div className="ml-2 flex items-center gap-1">
             <button
               onClick={handleCopy}
@@ -220,55 +282,44 @@ export function ArticleEditor({
               {copied ? "Copied!" : "Copy"}
             </button>
 
-            {user.plan !== "free" && (
-              <div className="relative group">
-                <button
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400
-                             hover:text-white bg-gray-800 rounded-lg transition-colors border border-gray-700"
-                >
-                  <Download size={12} />
-                  Export
-                </button>
-                <div className="absolute right-0 top-full mt-1 w-28 bg-gray-800 border border-gray-700
-                                rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  {["pdf", "docx", "pptx"].map((fmt) => (
-                    <button
-                      key={fmt}
-                      onClick={() => handleExport(fmt)}
-                      className="w-full text-left px-3 py-2 text-xs text-gray-300
-                                 hover:text-white hover:bg-gray-700 transition-colors first:rounded-t-lg last:rounded-b-lg uppercase"
-                    >
-                      {fmt}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            <button
+              onClick={() => handleExport(article.output_format || "pdf")}
+              disabled={isDownloading}
+              title={`Download as ${(article.output_format || "pdf").toUpperCase()}`}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold
+                         bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60
+                         text-white rounded-lg transition-colors shadow-sm shadow-emerald-900/40"
+            >
+              {isDownloading
+                ? <Loader2 size={12} className="animate-spin" />
+                : <Download size={12} />}
+              {isDownloading
+                ? "Downloading..."
+                : `Download ${(article.output_format || "pdf").toUpperCase()}`}
+            </button>
           </div>
         </div>
 
         {/* Editor content */}
         <div className="flex-1 overflow-y-auto px-12 py-8">
           <h1 className="text-3xl font-bold text-white mb-8">{article.title}</h1>
-          <EditorContent editor={editor} />
+          {/* Wrap EditorContent so clicks outside the title trigger sentence selection */}
+          <div onClick={handleEditorClick}>
+            <EditorContent editor={editor} />
+          </div>
         </div>
       </div>
 
-      {/* AI Bot Panel */}
-      <AnimatePresence>
-        {showAIBot && selectedText && (
-          <AIBotPanel
-            selectedText={selectedText}
-            onApply={(rewritten, remainingCalls) => {
-              handleApplyRewrite(rewritten);
-              setCallsRemaining(remainingCalls);
-              onUsageUpdate?.({ ai_bot_calls_remaining: remainingCalls });
-            }}
-            onClose={() => setShowAIBot(false)}
-            callsRemaining={callsRemaining}
-          />
-        )}
-      </AnimatePresence>
+      {/* AI Bot Panel — always visible */}
+      <AIBotPanel
+        selectedText={selectedText}
+        onApply={(rewritten, remainingCalls) => {
+          handleApplyRewrite(rewritten);
+          setCallsRemaining(remainingCalls);
+          onUsageUpdate?.({ ai_bot_calls_remaining: remainingCalls });
+        }}
+        callsRemaining={callsRemaining}
+      />
     </div>
   );
 }

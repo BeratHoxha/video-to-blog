@@ -43,7 +43,7 @@ class Article < ApplicationRecord
     base = { id: id, status: status, title: title }
     return base unless complete?
 
-    base.merge(content: content, word_count: word_count)
+    base.merge(content: content, word_count: word_count, output_format: output_format)
   end
 
   private
