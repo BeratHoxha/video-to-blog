@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, Loader2, AlertCircle } from "lucide-react";
+import { Sparkles, Loader2, AlertCircle } from "lucide-react";
 import { useAIBot } from "@/hooks/useAIBot";
 
 const QUICK_PROMPTS = [
@@ -13,21 +13,21 @@ const QUICK_PROMPTS = [
 interface AIBotPanelProps {
   selectedText: string;
   onApply: (rewritten: string, remainingCalls: number | null) => void;
-  onClose: () => void;
   callsRemaining: number | null;
 }
 
 export function AIBotPanel({
   selectedText,
   onApply,
-  onClose,
   callsRemaining,
 }: AIBotPanelProps) {
   const [prompt, setPrompt] = useState("");
   const { rewrite, isLoading, error, upgradeRequired } = useAIBot();
 
+  const hasSelection = selectedText.length > 0;
+
   const handleApply = async () => {
-    if (!prompt.trim()) return;
+    if (!prompt.trim() || !hasSelection) return;
     const result = await rewrite(selectedText, prompt);
     if (result) {
       onApply(result.result, result.ai_bot_calls_remaining);
@@ -40,25 +40,13 @@ export function AIBotPanel({
   };
 
   return (
-    <motion.div
-      initial={{ x: 320, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      exit={{ x: 320, opacity: 0 }}
-      transition={{ type: "spring", damping: 25, stiffness: 200 }}
-      className="w-80 border-l border-gray-800 bg-gray-900 flex flex-col h-full"
-    >
+    <div className="w-80 border-l border-gray-800 bg-gray-900 flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-800">
+      <div className="flex items-center p-4 border-b border-gray-800">
         <div className="flex items-center gap-2">
           <Sparkles size={16} className="text-emerald-500" />
           <span className="font-semibold text-sm text-white">AI Co-writer</span>
         </div>
-        <button
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-300 transition-colors"
-        >
-          <X size={16} />
-        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -67,10 +55,16 @@ export function AIBotPanel({
           <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
             Selected text
           </p>
-          <div className="bg-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-300 line-clamp-4 italic border-l-2 border-emerald-500">
-            {selectedText.slice(0, 200)}
-            {selectedText.length > 200 && "..."}
-          </div>
+          {hasSelection ? (
+            <div className="bg-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-300 line-clamp-4 italic border-l-2 border-emerald-500">
+              {selectedText.slice(0, 200)}
+              {selectedText.length > 200 && "..."}
+            </div>
+          ) : (
+            <div className="bg-gray-800/50 rounded-lg px-3 py-2.5 text-sm text-gray-600 italic border-l-2 border-gray-700">
+              Click a sentence or select text to rewrite with AI
+            </div>
+          )}
         </div>
 
         {/* Quick prompts */}
@@ -83,9 +77,11 @@ export function AIBotPanel({
               <button
                 key={p}
                 onClick={() => handleQuickPrompt(p)}
+                disabled={!hasSelection}
                 className="text-xs px-2.5 py-1.5 rounded-md bg-gray-800 border border-gray-700
                            text-gray-400 hover:border-emerald-500/50 hover:text-emerald-400
-                           transition-colors"
+                           transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+                           disabled:hover:border-gray-700 disabled:hover:text-gray-400"
               >
                 {p}
               </button>
@@ -101,12 +97,14 @@ export function AIBotPanel({
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="What should I change?"
+            placeholder={hasSelection ? "What should I change?" : "Select text first..."}
+            disabled={!hasSelection}
             rows={3}
             className="w-full bg-gray-800 border border-gray-700 rounded-lg
                        px-3 py-2.5 text-white text-sm placeholder-gray-600
                        focus:outline-none focus:ring-2 focus:ring-emerald-500/50
-                       focus:border-emerald-500 transition-colors resize-none"
+                       focus:border-emerald-500 transition-colors resize-none
+                       disabled:opacity-40 disabled:cursor-not-allowed"
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleApply();
             }}
@@ -151,7 +149,7 @@ export function AIBotPanel({
         )}
         <button
           onClick={handleApply}
-          disabled={isLoading || !prompt.trim()}
+          disabled={isLoading || !prompt.trim() || !hasSelection}
           className="w-full h-10 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50
                      text-white font-semibold rounded-lg transition-colors
                      flex items-center justify-center gap-2 text-sm"
@@ -169,6 +167,6 @@ export function AIBotPanel({
           )}
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 }

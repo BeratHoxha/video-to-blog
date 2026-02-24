@@ -10,10 +10,9 @@ interface SignUpPromptProps {
 export function SignUpPrompt({ onSignUp, onSeePricing }: SignUpPromptProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3, duration: 0.5 }}
-      className="mt-8 pt-8 border-t border-gray-700"
+      transition={{ duration: 0.3 }}
     >
       <div className="flex items-center gap-2 mb-4">
         <Zap size={18} className="text-emerald-500" />
@@ -25,10 +24,10 @@ export function SignUpPrompt({ onSignUp, onSeePricing }: SignUpPromptProps) {
         You just saw a preview. Sign up free to generate complete, unrestricted articles.
       </p>
 
-      <ul className="space-y-2.5 mb-6">
+      <ul className="grid grid-cols-2 gap-x-4 gap-y-2 mb-5">
         {SIGN_UP_BENEFITS.map((benefit) => (
-          <li key={benefit} className="flex items-start gap-2.5 text-sm text-gray-300">
-            <Check size={15} className="text-emerald-500 mt-0.5 shrink-0" />
+          <li key={benefit} className="flex items-start gap-2 text-sm text-gray-300">
+            <Check size={13} className="text-emerald-500 mt-0.5 shrink-0" />
             {benefit}
           </li>
         ))}

@@ -1,21 +1,28 @@
 import { useState, useRef, useEffect } from "react";
-import { PenLine, Clock, Zap, User, LogOut } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { PenLine, Clock, Zap, Settings, LogOut } from "lucide-react";
+import type { User } from "@/types";
 
 interface SidebarProps {
-  user: {
-    name: string;
-    plan: string;
-    words_used_this_month: number;
-    words_remaining: number | null;
-    ai_bot_calls_remaining: number | null;
-  };
-  currentView: "new" | "history";
-  onViewChange: (view: "new" | "history") => void;
+  user: Pick<
+    User,
+    | "name"
+    | "plan"
+    | "words_used_this_month"
+    | "words_remaining"
+    | "ai_bot_calls_remaining"
+  >;
 }
 
-export function Sidebar({ user, currentView, onViewChange }: SidebarProps) {
+export function Sidebar({ user }: SidebarProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const isNew = location.pathname === "/dashboard";
+  const isHistory = location.pathname.startsWith("/dashboard/articles");
+  const isProfile = location.pathname === "/dashboard/profile";
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -39,17 +46,23 @@ export function Sidebar({ user, currentView, onViewChange }: SidebarProps) {
 
   const isFree = user.plan === "free";
   const wordsUsed = user.words_used_this_month;
-  const wordsRemaining = user.words_remaining;
-  const aiRewritesUsed =
-    user.ai_bot_calls_remaining !== null ? 10 - user.ai_bot_calls_remaining : null;
   const wordTotal = isFree ? 2000 : null;
-  const wordPercent = wordTotal ? Math.min((wordsUsed / wordTotal) * 100, 100) : 0;
+  const wordPercent = wordTotal
+    ? Math.min((wordsUsed / wordTotal) * 100, 100)
+    : 0;
+  const aiRewritesUsed =
+    user.ai_bot_calls_remaining !== null
+      ? 10 - user.ai_bot_calls_remaining
+      : null;
 
   return (
     <aside className="w-60 shrink-0 flex flex-col h-screen border-r border-gray-800 bg-gray-900">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-gray-800">
-        <a href="/" className="flex items-center gap-1 font-bold text-lg tracking-tight">
+        <a
+          href="/"
+          className="flex items-center gap-1 font-bold text-lg tracking-tight"
+        >
           <span className="text-white">Video</span>
           <span className="text-emerald-500">·</span>
           <span className="text-white">Blog</span>
@@ -61,14 +74,14 @@ export function Sidebar({ user, currentView, onViewChange }: SidebarProps) {
         <NavItem
           icon={PenLine}
           label="New Article"
-          active={currentView === "new"}
-          onClick={() => onViewChange("new")}
+          active={isNew}
+          onClick={() => navigate("/dashboard")}
         />
         <NavItem
           icon={Clock}
           label="History"
-          active={currentView === "history"}
-          onClick={() => onViewChange("history")}
+          active={isHistory}
+          onClick={() => navigate("/dashboard/articles")}
         />
       </nav>
 
@@ -78,7 +91,9 @@ export function Sidebar({ user, currentView, onViewChange }: SidebarProps) {
           <div>
             <div className="flex justify-between text-xs text-gray-500 mb-1.5">
               <span>Words used</span>
-              <span>{wordsUsed.toLocaleString()} / {wordTotal.toLocaleString()}</span>
+              <span>
+                {wordsUsed.toLocaleString()} / {wordTotal.toLocaleString()}
+              </span>
             </div>
             <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
               <div
@@ -99,39 +114,47 @@ export function Sidebar({ user, currentView, onViewChange }: SidebarProps) {
         )}
 
         {isFree && (
-          <a
-            href="#pricing"
+          <button
+            onClick={() => navigate("/dashboard/profile?tab=plan")}
             className="flex items-center gap-2 w-full py-2 px-3 rounded-lg
-                       bg-emerald-500/10 border border-emerald-500/20 text-xs
-                       text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+              bg-emerald-500/10 border border-emerald-500/20 text-xs
+              text-emerald-400 hover:bg-emerald-500/20 transition-colors cursor-pointer"
           >
             <Zap size={12} />
             Unlock unlimited words
-          </a>
+          </button>
         )}
 
-        {/* User info */}
+        {/* User menu */}
         <div className="relative pt-2" ref={menuRef}>
           <button
             onClick={() => setMenuOpen((o) => !o)}
-            className="flex items-center gap-2.5 w-full rounded-lg hover:bg-gray-800/60 transition-colors px-1 py-1 -mx-1"
+            className="flex items-center gap-2.5 w-full rounded-lg
+              hover:bg-gray-800/60 transition-colors px-1 py-1 -mx-1"
           >
             <div className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-300 shrink-0">
               {user.name?.[0]?.toUpperCase() ?? "U"}
             </div>
             <div className="min-w-0 text-left">
-              <p className="text-xs font-medium text-white truncate">{user.name}</p>
-              <p className="text-xs text-gray-600 capitalize">{user.plan} plan</p>
+              <p className="text-xs font-medium text-white truncate">
+                {user.name}
+              </p>
+              <p className="text-xs text-gray-600 capitalize">
+                {user.plan} plan
+              </p>
             </div>
           </button>
 
           {menuOpen && (
             <div className="absolute bottom-full left-0 mb-1 w-44 rounded-lg border border-gray-800 bg-gray-900 shadow-lg py-1 z-50">
               <button
-                disabled
-                className="flex items-center gap-2.5 w-full px-3 py-2 text-xs text-gray-500 cursor-not-allowed"
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate("/dashboard/profile");
+                }}
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-xs text-gray-300 hover:bg-gray-800 transition-colors"
               >
-                <User size={13} />
+                <Settings size={13} />
                 Profile
               </button>
               <div className="my-1 border-t border-gray-800" />
@@ -165,10 +188,11 @@ function NavItem({
     <button
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm
-                  transition-colors text-left
-        ${active
-          ? "bg-gray-800 text-white"
-          : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
+        transition-colors text-left
+        ${
+          active
+            ? "bg-gray-800 text-white"
+            : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
         }`}
     >
       <Icon size={16} />

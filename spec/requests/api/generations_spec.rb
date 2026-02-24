@@ -3,7 +3,10 @@ require "rails_helper"
 RSpec.describe "Api::Generations", type: :request do
   describe "POST /api/generations" do
     context "with a source URL" do
-      before { allow(ArticleGenerationJob).to receive(:perform_later) }
+      before do
+        allow(ArticleGenerationJob).to receive(:perform_now)
+        allow(Thread).to receive(:new).and_yield
+      end
 
       it "returns 201 with article_id and processing status" do
         post "/api/generations", params: { source_url: "https://youtube.com/watch?v=abc" }
@@ -13,8 +16,8 @@ RSpec.describe "Api::Generations", type: :request do
         expect(json["article_id"]).to be_present
       end
 
-      it "enqueues ArticleGenerationJob" do
-        expect(ArticleGenerationJob).to receive(:perform_later)
+      it "starts generation job" do
+        expect(ArticleGenerationJob).to receive(:perform_now).with(anything, user_tier: "guest")
         post "/api/generations", params: { source_url: "https://youtube.com/watch?v=abc" }
       end
     end
@@ -31,13 +34,36 @@ RSpec.describe "Api::Generations", type: :request do
 
       before do
         sign_in user
-        allow(ArticleGenerationJob).to receive(:perform_later)
+        allow(ArticleGenerationJob).to receive(:perform_now)
+        allow(Thread).to receive(:new).and_yield
       end
 
       it "creates article and enqueues job with free tier" do
-        expect(ArticleGenerationJob).to receive(:perform_later).with(anything, user_tier: "free")
+        expect(ArticleGenerationJob).to receive(:perform_now).with(anything, user_tier: "free")
         post "/api/generations", params: { source_url: "https://youtube.com/watch?v=abc" }
         expect(response).to have_http_status(:created)
+      end
+    end
+
+    context "when authenticated as free user with no remaining words" do
+      let(:user) do
+        create(
+          :user,
+          :free,
+          words_used_this_month: 2000,
+          words_reset_at: Time.current
+        )
+      end
+
+      before do
+        sign_in user
+      end
+
+      it "returns 422 with upgrade error" do
+        post "/api/generations", params: { source_url: "https://youtube.com/watch?v=abc" }
+        expect(response).to have_http_status(:unprocessable_entity)
+        json = JSON.parse(response.body)
+        expect(json["error"]).to include("Upgrade")
       end
     end
   end

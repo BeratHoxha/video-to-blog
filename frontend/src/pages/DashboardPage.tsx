@@ -1,85 +1,40 @@
-import { useState, useCallback } from "react";
-import { Sidebar } from "@/components/Dashboard/Sidebar";
-import { ArticleHistory } from "@/components/Dashboard/ArticleHistory";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { VideoToBlogEngine } from "@/components/Engine/VideoToBlogEngine";
-import { ArticleEditor } from "@/components/Editor/ArticleEditor";
-import { TypewriterText } from "@/components/shared/TypewriterText";
 import { useGenerationPoller } from "@/hooks/useGenerationPoller";
+import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  plan: string;
-  words_remaining: number | null;
-  words_used_this_month: number;
-  ai_bot_calls_remaining: number | null;
-  onboarding_completed: boolean;
-}
-
-interface Article {
-  id: number;
-  title: string;
-  content: string;
-  word_count: number;
-}
-
-interface DashboardPageProps {
-  user: User;
-}
-
-export function DashboardPage({ user }: DashboardPageProps) {
-  const [userState, setUserState] = useState<User>(user);
-  const [currentView, setCurrentView] = useState<"new" | "history">("new");
+export function DashboardPage() {
+  const { currentUser, updateUser } = useAuth();
+  const navigate = useNavigate();
   const [pendingArticleId, setPendingArticleId] = useState<number | null>(null);
-  const [currentArticle, setCurrentArticle] = useState<Article | null>(null);
-  const [animatedContent, setAnimatedContent] = useState<string | undefined>();
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleArticleGenerated = (articleId: number) => {
     setPendingArticleId(articleId);
     setIsGenerating(true);
-    setCurrentArticle(null);
   };
-
-  const handleArticleOpen = useCallback((articleId: number) => {
-    fetch(`/api/articles/${articleId}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setCurrentArticle(data.article);
-        setAnimatedContent(undefined);
-        setCurrentView("new");
-      })
-      .catch(console.error);
-  }, []);
 
   useGenerationPoller({
     articleId: pendingArticleId,
     onComplete: (data) => {
       setIsGenerating(false);
       setPendingArticleId(null);
-      if (data.content) {
-        if (userState.plan === "free") {
-          const generatedWords = data.word_count ?? 0;
-          setUserState((prev) => {
-            const wordsUsed = prev.words_used_this_month + generatedWords;
-            return {
-              ...prev,
-              words_used_this_month: wordsUsed,
-              words_remaining: Math.max(0, 2000 - wordsUsed),
-            };
-          });
-        }
 
-        const article: Article = {
-          id: data.id,
-          title: data.title ?? "Generated Article",
-          content: data.content,
-          word_count: data.word_count ?? 0,
-        };
-        setCurrentArticle(article);
-        setAnimatedContent(data.content);
+      if (data.content && currentUser.plan === "free") {
+        const generatedWords = data.word_count ?? 0;
+        const wordsUsed = currentUser.words_used_this_month + generatedWords;
+        updateUser({
+          words_used_this_month: wordsUsed,
+          words_remaining: Math.max(0, 2000 - wordsUsed),
+        });
+      }
+
+      if (data.id) {
+        navigate(`/dashboard/articles/${data.id}`, {
+          state: { animatedContent: data.content },
+        });
       }
     },
     onError: () => {
@@ -89,54 +44,27 @@ export function DashboardPage({ user }: DashboardPageProps) {
   });
 
   return (
-    <div className="flex h-screen bg-gray-950 overflow-hidden">
-      <Sidebar
-        user={userState}
-        currentView={currentView}
-        onViewChange={(view) => {
-          setCurrentView(view);
-          if (view === "new") {
-            setCurrentArticle(null);
-            setAnimatedContent(undefined);
-          }
-        }}
-      />
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {currentView === "history" ? (
-          <ArticleHistory onArticleOpen={handleArticleOpen} />
-        ) : currentArticle ? (
-          <ArticleEditor
-            article={currentArticle}
-            user={userState}
-            animatedContent={animatedContent}
-            onUsageUpdate={(usage) => {
-              setUserState((prev) => ({ ...prev, ...usage }));
-            }}
+    <div className="flex-1 overflow-y-auto">
+      {isGenerating ? (
+        <div className="flex flex-col items-center justify-center h-full gap-4 text-gray-500">
+          <Loader2 size={32} className="animate-spin text-emerald-500" />
+          <p className="text-sm">Transcribing and writing your article...</p>
+        </div>
+      ) : (
+        <div className="max-w-2xl mx-auto px-6 py-10">
+          <h1 className="text-2xl font-bold text-white mb-2">New Article</h1>
+          <p className="text-gray-500 text-sm mb-8">
+            Paste a video URL or upload a file to generate your article.
+          </p>
+          <VideoToBlogEngine
+            authenticated={true}
+            userTier={currentUser.plan}
+            wordsRemaining={currentUser.words_remaining}
+            onArticleGenerated={handleArticleGenerated}
+            onUpgrade={() => navigate("/dashboard/profile?tab=plan")}
           />
-        ) : (
-          <div className="flex-1 overflow-y-auto">
-            {isGenerating ? (
-              <div className="flex flex-col items-center justify-center h-full gap-4 text-gray-500">
-                <Loader2 size={32} className="animate-spin text-emerald-500" />
-                <p className="text-sm">Transcribing and writing your article...</p>
-              </div>
-            ) : (
-              <div className="max-w-2xl mx-auto px-6 py-10">
-                <h1 className="text-2xl font-bold text-white mb-2">New Article</h1>
-                <p className="text-gray-500 text-sm mb-8">
-                  Paste a video URL or upload a file to generate your article.
-                </p>
-                <VideoToBlogEngine
-                  authenticated={true}
-                  userTier={userState.plan}
-                  onArticleGenerated={handleArticleGenerated}
-                />
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -8,6 +8,14 @@ module Api
                       status: :unprocessable_entity
       end
 
+      if current_user&.free?
+        current_user.reset_words_if_needed!
+        if current_user.words_remaining <= 0
+          return render json: { error: "You've used all 2,000 words in your free plan this month. Upgrade to keep generating." },
+                        status: :unprocessable_entity
+        end
+      end
+
       article = Article.create!(
         user: current_user,
         source_url: params[:source_url],
@@ -22,11 +30,20 @@ module Api
       )
 
       user_tier = current_user&.plan || "guest"
-      # TODO: Run this asynchronously with ActiveJob and Sidekiq
-      ArticleGenerationJob.perform_now(article.id, user_tier: user_tier)
+
+      # Run generation in a background thread so the response returns immediately.
+      # The frontend polls /api/articles/:id/status until the job completes.
+      Thread.new do
+        Rails.application.executor.wrap do
+          ArticleGenerationJob.perform_now(article.id, user_tier: user_tier)
+        end
+      end
 
       render json: { article_id: article.id, status: "processing" },
              status: :created
+    rescue ActiveRecord::RecordInvalid => e
+      render json: { error: e.record.errors.full_messages.to_sentence },
+             status: :unprocessable_entity
     end
   end
 end

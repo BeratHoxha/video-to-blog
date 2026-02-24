@@ -6,6 +6,7 @@ interface GenerationStatus {
   title?: string;
   content?: string;
   word_count?: number;
+  output_format?: string;
 }
 
 interface UseGenerationPollerOptions {
