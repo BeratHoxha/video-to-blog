@@ -12,5 +12,6 @@ class ApplicationController < ActionController::Base
 
     current_user.as_api_json
   end
+
   helper_method :current_user_json
 end

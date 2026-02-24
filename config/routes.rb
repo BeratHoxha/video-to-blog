@@ -8,6 +8,9 @@ Rails.application.routes.draw do
   }
 
   get "/dashboard", to: "dashboard#index"
+  get "/dashboard/articles", to: "dashboard#index"
+  get "/dashboard/articles/:id", to: "dashboard#index"
+  get "/dashboard/profile", to: "dashboard#index"
   get "/onboarding", to: "onboarding#index"
   post "/onboarding", to: "onboarding#complete"
 

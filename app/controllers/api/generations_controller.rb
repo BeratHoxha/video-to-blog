@@ -41,6 +41,9 @@ module Api
 
       render json: { article_id: article.id, status: "processing" },
              status: :created
+    rescue ActiveRecord::RecordInvalid => e
+      render json: { error: e.record.errors.full_messages.to_sentence },
+             status: :unprocessable_entity
     end
   end
 end

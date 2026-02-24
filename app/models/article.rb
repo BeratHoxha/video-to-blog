@@ -5,6 +5,7 @@ class Article < ApplicationRecord
   enum source_type: { url: 0, file: 1 }
 
   validates :status, presence: true
+  validate :user_has_remaining_words_for_generation, on: :create
 
   scope :recent, -> { order(created_at: :desc) }
   scope :for_user, ->(user) { where(user: user) }
@@ -52,5 +53,13 @@ class Article < ApplicationRecord
     return unless content.present?
 
     self.word_count = content.gsub(/<[^>]+>/, " ").split.length
+  end
+
+  def user_has_remaining_words_for_generation
+    return unless user&.free?
+    return unless user.persisted?
+    return unless user.words_remaining.to_i <= 0
+
+    errors.add(:base, "Monthly word limit reached. Upgrade to continue.")
   end
 end

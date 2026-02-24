@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Nav } from "@/components/Landing/Nav";
 import { HeroEyebrow } from "@/components/Landing/HeroEyebrow";
 import { DemoVideo } from "@/components/Landing/DemoVideo";
@@ -15,6 +15,12 @@ interface LandingPageProps {
 
 export function LandingPage({ authenticated }: LandingPageProps) {
   const [guestArticleId, setGuestArticleId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (authenticated) {
+      window.location.replace("/dashboard");
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-950">

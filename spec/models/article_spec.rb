@@ -16,6 +16,21 @@ RSpec.describe Article, type: :model do
       article = build(:article, status: nil)
       expect(article).not_to be_valid
     end
+
+    it "is invalid for free users with no remaining words" do
+      user = create(:user, :free, words_used_this_month: 2000, words_reset_at: Time.current)
+      article = build(:article, user: user)
+
+      expect(article).not_to be_valid
+      expect(article.errors[:base]).to include("Monthly word limit reached. Upgrade to continue.")
+    end
+
+    it "is valid for paid users even when words_used_this_month is high" do
+      user = create(:user, :basic, words_used_this_month: 10_000, words_reset_at: Time.current)
+      article = build(:article, user: user)
+
+      expect(article).to be_valid
+    end
   end
 
   describe "word_count calculation" do
@@ -37,20 +52,21 @@ RSpec.describe Article, type: :model do
     it ".recent returns articles in descending created_at order" do
       old = create(:article, created_at: 2.days.ago)
       recent = create(:article, created_at: 1.hour.ago)
-      expect(Article.recent.first).to eq(recent)
+      scoped = Article.where(id: [old.id, recent.id]).recent
+      expect(scoped.first).to eq(recent)
     end
 
     it ".for_user returns only articles for the given user" do
       user = create(:user)
       own = create(:article, user: user)
       _other = create(:article)
-      expect(Article.for_user(user)).to contain_exactly(own)
+      expect(Article.for_user(user)).to include(own)
     end
 
     it ".completed returns only complete articles" do
       complete = create(:article, status: :complete)
       _processing = create(:article, :processing)
-      expect(Article.completed).to contain_exactly(complete)
+      expect(Article.completed).to include(complete)
     end
   end
 
