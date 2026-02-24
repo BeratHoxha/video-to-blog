@@ -43,12 +43,8 @@ if (onboardingRoot) {
 // Auth pages (sign-in / sign-up)
 const authRoot = document.getElementById("auth-root");
 if (authRoot) {
-  const mode = (authRoot.getAttribute("data-page") ?? "sign-in") as
-    | "sign-in"
-    | "sign-up";
-  const errors: string[] = JSON.parse(
-    authRoot.getAttribute("data-errors") ?? "[]"
-  );
+  const mode = (authRoot.getAttribute("data-page") ?? "sign-in") as "sign-in" | "sign-up";
+  const errors: string[] = JSON.parse(authRoot.getAttribute("data-errors") ?? "[]");
   ReactDOM.createRoot(authRoot).render(
     <React.StrictMode>
       <AuthPage mode={mode} errors={errors} csrfToken={csrfToken} />

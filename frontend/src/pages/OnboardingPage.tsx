@@ -6,7 +6,11 @@ interface OnboardingPageProps {
 }
 
 const USE_CASES = [
-  { value: "content_creator", label: "Content Creator", description: "YouTube, podcasts, social media" },
+  {
+    value: "content_creator",
+    label: "Content Creator",
+    description: "YouTube, podcasts, social media",
+  },
   { value: "blogger", label: "Blogger", description: "Personal or professional blog" },
   { value: "marketer", label: "Marketer", description: "Content marketing, SEO articles" },
   { value: "student", label: "Student", description: "Assignments, study notes" },
@@ -28,9 +32,7 @@ export function OnboardingPage({ csrfToken }: OnboardingPageProps) {
 
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            How will you use Video·Blog?
-          </h1>
+          <h1 className="text-3xl font-bold text-white mb-2">How will you use Video·Blog?</h1>
           <p className="text-gray-400 text-sm">
             This helps us tailor your experience. You can change it later.
           </p>
@@ -50,16 +52,14 @@ export function OnboardingPage({ csrfToken }: OnboardingPageProps) {
                   type="button"
                   onClick={() => setSelected(value)}
                   className={`relative text-left p-4 rounded-xl border transition-all
-                    ${active
-                      ? "border-emerald-500 bg-emerald-500/10"
-                      : "border-gray-800 bg-gray-900 hover:border-gray-700"
+                    ${
+                      active
+                        ? "border-emerald-500 bg-emerald-500/10"
+                        : "border-gray-800 bg-gray-900 hover:border-gray-700"
                     }`}
                 >
                   {active && (
-                    <CheckCircle2
-                      size={16}
-                      className="absolute top-3 right-3 text-emerald-500"
-                    />
+                    <CheckCircle2 size={16} className="absolute top-3 right-3 text-emerald-500" />
                   )}
                   <p className="font-medium text-white text-sm">{label}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{description}</p>

@@ -11,7 +11,7 @@ RSpec.describe "Api::Generations", type: :request do
       it "returns 201 with article_id and processing status" do
         post "/api/generations", params: { source_url: "https://youtube.com/watch?v=abc" }
         expect(response).to have_http_status(:created)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json["status"]).to eq("processing")
         expect(json["article_id"]).to be_present
       end
@@ -62,7 +62,7 @@ RSpec.describe "Api::Generations", type: :request do
       it "returns 422 with upgrade error" do
         post "/api/generations", params: { source_url: "https://youtube.com/watch?v=abc" }
         expect(response).to have_http_status(:unprocessable_entity)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json["error"]).to include("Upgrade")
       end
     end
@@ -73,7 +73,7 @@ RSpec.describe "Api::Generations", type: :request do
 
     it "returns processing status without content" do
       get "/api/articles/#{article.id}/status"
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json["status"]).to eq("processing")
       expect(json["content"]).to be_nil
     end
@@ -83,7 +83,7 @@ RSpec.describe "Api::Generations", type: :request do
 
       it "returns complete status with content" do
         get "/api/articles/#{article.id}/status"
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json["status"]).to eq("complete")
         expect(json["content"]).to eq("<p>Done</p>")
       end

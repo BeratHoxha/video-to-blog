@@ -28,16 +28,16 @@ RSpec.describe ExportService do
     end
 
     it "raises ExportError for unknown format" do
-      expect {
+      expect do
         described_class.call(article: article, format: "csv")
-      }.to raise_error(ExportService::ExportError, /Unknown format/)
+      end.to raise_error(ExportService::ExportError, /Unknown format/)
     end
 
     it "raises ExportError when content is blank" do
       empty_article = build(:article, content: nil)
-      expect {
+      expect do
         described_class.call(article: empty_article, format: "pdf")
-      }.to raise_error(ExportService::ExportError, /no content/)
+      end.to raise_error(ExportService::ExportError, /no content/)
     end
   end
 end

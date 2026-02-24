@@ -1,0 +1,66 @@
+plugins:
+  - rubocop-rails
+  - rubocop-performance
+
+AllCops:
+  TargetRubyVersion: 3.3
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - "db/schema.rb"
+    - "db/migrate/**/*"
+    - "bin/**/*"
+    - "vendor/**/*"
+    - "node_modules/**/*"
+
+# Line length — 100 chars, allow long URLs and comments
+Layout/LineLength:
+  Max: 100
+  AllowedPatterns:
+    - '\A\s*#'
+    - 'https?://'
+
+# Disruptive to retroactively add to all files
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+# Rails services/controllers don't need YARD docs
+Style/Documentation:
+  Enabled: false
+
+# Allow JSON.parse(...) rescue nil style where intentional
+Style/RescueModifier:
+  Enabled: true
+
+# Relax metrics for service classes
+Metrics/MethodLength:
+  Max: 20
+  CountAsOne: [array, hash, heredoc]
+
+Metrics/AbcSize:
+  Max: 30
+
+Metrics/ClassLength:
+  Max: 250
+
+Metrics/BlockLength:
+  Max: 35
+  Exclude:
+    - "spec/**/*"
+    - "config/**/*"
+    - "config/routes.rb"
+
+# Allow e, id as short param names
+Naming/MethodParameterName:
+  AllowedNames: [e, id, io, on, to, by, as]
+
+# Enforce double quotes for consistency with JS
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+# Rails conventions
+Rails/FilePath:
+  EnforcedStyle: slashes
+
+Rails/RakeEnvironment:
+  Enabled: false

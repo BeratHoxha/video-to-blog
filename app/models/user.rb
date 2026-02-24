@@ -1,9 +1,9 @@
 class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable,
-         :omniauthable, omniauth_providers: [:google_oauth2, :github]
+         :omniauthable, omniauth_providers: %i[google_oauth2 github]
 
-  enum plan: { free: 0, basic: 1, premium: 2 }
+  enum :plan, { free: 0, basic: 1, premium: 2 }
 
   has_many :articles, dependent: :destroy
 
@@ -48,32 +48,26 @@ class User < ApplicationRecord
 
   def increment_ai_bot_calls!
     reset_ai_bot_calls_if_needed!
-    increment!(:ai_bot_calls_this_week)
+    update(ai_bot_calls_this_week: ai_bot_calls_this_week + 1)
   end
 
   def increment_words_used!(count)
     reset_words_if_needed!
-    increment!(:words_used_this_month, count)
+    update(words_used_this_month: words_used_this_month + count)
   end
 
   def reset_ai_bot_calls_if_needed!
     return unless ai_bot_calls_reset_at.nil? ||
                   ai_bot_calls_reset_at < 1.week.ago
 
-    update_columns(
-      ai_bot_calls_this_week: 0,
-      ai_bot_calls_reset_at: Time.current
-    )
+    update(ai_bot_calls_this_week: 0, ai_bot_calls_reset_at: Time.current)
   end
 
   def reset_words_if_needed!
     return unless words_reset_at.nil? ||
                   words_reset_at < 1.month.ago
 
-    update_columns(
-      words_used_this_month: 0,
-      words_reset_at: Time.current
-    )
+    update(words_used_this_month: 0, words_reset_at: Time.current)
   end
 
   def as_api_json

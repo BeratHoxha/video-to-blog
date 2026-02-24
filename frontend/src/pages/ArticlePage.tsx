@@ -12,8 +12,7 @@ export function ArticlePage() {
   const [article, setArticle] = useState<Article | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const animatedContent = (location.state as { animatedContent?: string } | null)
-    ?.animatedContent;
+  const animatedContent = (location.state as { animatedContent?: string } | null)?.animatedContent;
 
   useEffect(() => {
     if (!id) return;

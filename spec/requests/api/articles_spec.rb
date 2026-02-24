@@ -21,8 +21,8 @@ RSpec.describe "Api::Articles", type: :request do
 
       it "returns only the current user's articles" do
         get "/api/articles"
-        json = JSON.parse(response.body)
-        titles = json["articles"].map { |a| a["title"] }
+        json = response.parsed_body
+        titles = json["articles"].pluck("title")
         expect(titles).to include("My Article")
         expect(titles).not_to include("Other Article")
       end
@@ -35,7 +35,7 @@ RSpec.describe "Api::Articles", type: :request do
     it "returns article data" do
       get "/api/articles/#{article.id}"
       expect(response).to have_http_status(:ok)
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json["article"]["id"]).to eq(article.id)
     end
 

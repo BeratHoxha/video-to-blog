@@ -39,10 +39,16 @@ export function Nav({ authenticated }: NavProps) {
           <button onClick={() => scrollTo("demo")} className="hover:text-white transition-colors">
             Demo
           </button>
-          <button onClick={() => scrollTo("how-to-use")} className="hover:text-white transition-colors">
+          <button
+            onClick={() => scrollTo("how-to-use")}
+            className="hover:text-white transition-colors"
+          >
             How it works
           </button>
-          <button onClick={() => scrollTo("pricing")} className="hover:text-white transition-colors">
+          <button
+            onClick={() => scrollTo("pricing")}
+            className="hover:text-white transition-colors"
+          >
             Pricing
           </button>
         </nav>
@@ -96,10 +102,16 @@ export function Nav({ authenticated }: NavProps) {
             </button>
           ))}
           <div className="pt-2 flex gap-3">
-            <a href="/users/sign_in" className="flex-1 text-center py-2 text-sm text-gray-400 border border-gray-700 rounded-lg">
+            <a
+              href="/users/sign_in"
+              className="flex-1 text-center py-2 text-sm text-gray-400 border border-gray-700 rounded-lg"
+            >
               Sign in
             </a>
-            <a href="/users/sign_up" className="flex-1 text-center py-2 text-sm font-medium text-white bg-emerald-500 rounded-lg">
+            <a
+              href="/users/sign_up"
+              className="flex-1 text-center py-2 text-sm font-medium text-white bg-emerald-500 rounded-lg"
+            >
               Get started
             </a>
           </div>

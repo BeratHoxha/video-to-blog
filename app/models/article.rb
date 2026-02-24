@@ -1,8 +1,8 @@
 class Article < ApplicationRecord
   belongs_to :user, optional: true
 
-  enum status: { processing: 0, complete: 1, failed: 2 }
-  enum source_type: { url: 0, file: 1 }
+  enum :status, { processing: 0, complete: 1, failed: 2 }
+  enum :source_type, { url: 0, file: 1 }
 
   validates :status, presence: true
   validate :user_has_remaining_words_for_generation, on: :create
@@ -50,7 +50,7 @@ class Article < ApplicationRecord
   private
 
   def calculate_word_count
-    return unless content.present?
+    return if content.blank?
 
     self.word_count = content.gsub(/<[^>]+>/, " ").split.length
   end

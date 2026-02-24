@@ -1,3 +1,5 @@
+require "net/http"
+
 class TranscriptionService
   class TranscriptionError < StandardError; end
 
@@ -59,37 +61,43 @@ class TranscriptionService
       out: File::NULL, err: File::NULL
     )
 
-    (success && File.exist?(trimmed) && File.size(trimmed) > 0) ? trimmed : audio_path
+    success && File.exist?(trimmed) && File.size(trimmed).positive? ? trimmed : audio_path
   end
 
   # Use yt-dlp to extract audio from a YouTube URL, then transcribe with OpenAI.
   def download_youtube_audio_and_transcribe(url)
     Dir.mktmpdir("yt_audio") do |tmpdir|
       output_template = File.join(tmpdir, "audio.%(ext)s")
-
-      success = system(
-        YT_DLP_BIN,
-        "-x",
-        "--audio-format", "mp3",
-        "--audio-quality", "5",
-        "--no-playlist",
-        "--ffmpeg-location", FFMPEG_BIN,
-        "-o", output_template,
-        url,
-        out: File::NULL, err: File::NULL
-      )
-
-      raise TranscriptionError, "yt-dlp failed to download audio" unless success
-
-      audio_file = Dir.glob(File.join(tmpdir, "audio.*")).first
-      raise TranscriptionError, "Audio file not found after yt-dlp download" unless audio_file
-
+      run_yt_dlp!(url, output_template)
+      audio_file = find_audio_file!(tmpdir)
       transcribe_file_with_openai(maybe_trim(audio_file, tmpdir))
     end
   rescue TranscriptionError
     raise
-  rescue => e
+  rescue StandardError => e
     raise TranscriptionError, "YouTube audio download failed: #{e.message}"
+  end
+
+  def run_yt_dlp!(url, output_template)
+    success = system(
+      YT_DLP_BIN,
+      "-x",
+      "--audio-format", "mp3",
+      "--audio-quality", "5",
+      "--no-playlist",
+      "--ffmpeg-location", FFMPEG_BIN,
+      "-o", output_template,
+      url,
+      out: File::NULL, err: File::NULL
+    )
+    raise TranscriptionError, "yt-dlp failed to download audio" unless success
+  end
+
+  def find_audio_file!(tmpdir)
+    audio_file = Dir.glob(File.join(tmpdir, "audio.*")).first
+    raise TranscriptionError, "Audio file not found after yt-dlp download" unless audio_file
+
+    audio_file
   end
 
   # Downloads a remote audio/video file, optionally trims it, then transcribes.
@@ -98,15 +106,19 @@ class TranscriptionService
 
     Dir.mktmpdir("audio") do |tmpdir|
       audio_path = File.join(tmpdir, "audio#{ext}")
-
-      File.open(audio_path, "wb") do |f|
-        URI.open(url, "rb", read_timeout: 60) { |remote| f.write(remote.read) }
-      end
-
+      fetch_remote_file(url, audio_path)
       transcribe_file_with_openai(maybe_trim(audio_path, tmpdir))
     end
-  rescue OpenURI::HTTPError, SocketError => e
+  rescue Net::HTTPError, SocketError, Timeout::Error => e
     raise TranscriptionError, "Could not download audio file: #{e.message}"
+  end
+
+  def fetch_remote_file(url, destination)
+    uri = URI.parse(url)
+    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", read_timeout: 60) do |http|
+      response = http.request(Net::HTTP::Get.new(uri))
+      File.binwrite(destination, response.body)
+    end
   end
 
   def transcribe_file_with_openai(file_path)

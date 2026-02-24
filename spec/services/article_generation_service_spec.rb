@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe ArticleGenerationService do
   let(:transcript) { "This is a test transcript about Ruby on Rails." }
   let(:options) { { output_type: "Blog-Driven", include_images: false, use_external_links: false } }
-  let(:full_content) { "<h1>Ruby on Rails Guide</h1><p>#{"word " * 400}</p>" }
+  let(:full_content) { "<h1>Ruby on Rails Guide</h1><p>#{'word ' * 400}</p>" }
 
   before do
     allow(OpenaiClientService)

@@ -53,10 +53,7 @@ export function LandingPage({ authenticated }: LandingPageProps) {
 
       {/* Generation modal for unauthenticated preview */}
       {guestArticleId && (
-        <GenerationModal
-          articleId={guestArticleId}
-          onClose={() => setGuestArticleId(null)}
-        />
+        <GenerationModal articleId={guestArticleId} onClose={() => setGuestArticleId(null)} />
       )}
     </div>
   );

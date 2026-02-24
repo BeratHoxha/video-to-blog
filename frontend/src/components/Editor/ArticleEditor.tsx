@@ -5,16 +5,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import Placeholder from "@tiptap/extension-placeholder";
 import { AIBotPanel } from "./AIBotPanel";
-import {
-  Bold,
-  Italic,
-  Heading2,
-  Heading3,
-  Copy,
-  Download,
-  Check,
-  Loader2,
-} from "lucide-react";
+import { Bold, Italic, Heading2, Heading3, Copy, Download, Check, Loader2 } from "lucide-react";
 
 interface Article {
   id: number;
@@ -290,9 +281,11 @@ export function ArticleEditor({
                          bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60
                          text-white rounded-lg transition-colors shadow-sm shadow-emerald-900/40"
             >
-              {isDownloading
-                ? <Loader2 size={12} className="animate-spin" />
-                : <Download size={12} />}
+              {isDownloading ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <Download size={12} />
+              )}
               {isDownloading
                 ? "Downloading..."
                 : `Download ${(article.output_format || "pdf").toUpperCase()}`}
@@ -340,9 +333,11 @@ function ToolbarButton({
       onClick={onClick}
       title={title}
       className={`p-1.5 rounded-md transition-colors
-        ${active
-          ? "bg-emerald-500/20 text-emerald-400"
-          : "text-gray-500 hover:text-gray-300 hover:bg-gray-800"}`}
+        ${
+          active
+            ? "bg-emerald-500/20 text-emerald-400"
+            : "text-gray-500 hover:text-gray-300 hover:bg-gray-800"
+        }`}
     >
       {children}
     </button>

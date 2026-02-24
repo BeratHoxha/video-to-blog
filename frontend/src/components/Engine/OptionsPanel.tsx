@@ -24,9 +24,7 @@ export function OptionsPanel({
     <div className="space-y-5">
       {/* Output Type */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1.5">
-          Output Type
-        </label>
+        <label className="block text-sm font-medium text-gray-300 mb-1.5">Output Type</label>
         <select
           value={outputType}
           onChange={(e) => onChange("outputType", e.target.value)}
@@ -92,8 +90,7 @@ export function OptionsPanel({
       {/* Additional Instructions */}
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-1.5">
-          Additional Instructions{" "}
-          <span className="text-gray-600 font-normal">(optional)</span>
+          Additional Instructions <span className="text-gray-600 font-normal">(optional)</span>
         </label>
         <textarea
           value={additionalInstructions}

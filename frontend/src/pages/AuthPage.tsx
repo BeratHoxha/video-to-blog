@@ -12,10 +12,7 @@ export function AuthPage({ mode, errors, csrfToken }: AuthPageProps) {
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4">
       {/* Back to home */}
-      <a
-        href="/"
-        className="mb-8 flex items-center gap-1 font-bold text-lg tracking-tight"
-      >
+      <a href="/" className="mb-8 flex items-center gap-1 font-bold text-lg tracking-tight">
         <span className="text-white">Video</span>
         <span className="text-emerald-500">·</span>
         <span className="text-white">Blog</span>
@@ -26,9 +23,7 @@ export function AuthPage({ mode, errors, csrfToken }: AuthPageProps) {
           {isSignUp ? "Create your account" : "Welcome back"}
         </h1>
         <p className="text-gray-400 text-sm mb-6">
-          {isSignUp
-            ? "Start turning videos into blog posts."
-            : "Sign in to your account."}
+          {isSignUp ? "Start turning videos into blog posts." : "Sign in to your account."}
         </p>
 
         {/* Errors */}
@@ -36,27 +31,19 @@ export function AuthPage({ mode, errors, csrfToken }: AuthPageProps) {
           <div className="mb-5 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex gap-2">
             <AlertCircle size={16} className="text-red-400 mt-0.5 shrink-0" />
             <ul className="text-sm text-red-300 space-y-0.5">
-              {errors.map((e, i) => <li key={i}>{e}</li>)}
+              {errors.map((e, i) => (
+                <li key={i}>{e}</li>
+              ))}
             </ul>
           </div>
         )}
 
-        <form
-          method="POST"
-          action={isSignUp ? "/users" : "/users/sign_in"}
-          className="space-y-4"
-        >
-          <input
-            type="hidden"
-            name="authenticity_token"
-            value={csrfToken}
-          />
+        <form method="POST" action={isSignUp ? "/users" : "/users/sign_in"} className="space-y-4">
+          <input type="hidden" name="authenticity_token" value={csrfToken} />
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">
-              Email
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
             <input
               type="email"
               name="user[email]"
@@ -71,9 +58,7 @@ export function AuthPage({ mode, errors, csrfToken }: AuthPageProps) {
 
           {/* Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">
-              Password
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">Password</label>
             <input
               type="password"
               name="user[password]"

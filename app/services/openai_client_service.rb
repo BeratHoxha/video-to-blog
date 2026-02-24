@@ -18,7 +18,8 @@ class OpenaiClientService
     "audio file"
   ].freeze
 
-  def self.chat_with_fallback(messages:, primary_model:, fallback_model:, temperature: 0.7, max_tokens: nil)
+  def self.chat_with_fallback(messages:, primary_model:, fallback_model:, temperature: 0.7,
+                              max_tokens: nil)
     new.chat_with_fallback(
       messages: messages,
       primary_model: primary_model,
@@ -38,7 +39,8 @@ class OpenaiClientService
     )
   end
 
-  def chat_with_fallback(messages:, primary_model:, fallback_model:, temperature: 0.7, max_tokens: nil)
+  def chat_with_fallback(messages:, primary_model:, fallback_model:, temperature: 0.7,
+                         max_tokens: nil)
     with_model_fallback(primary_model: primary_model, fallback_model: fallback_model) do |model|
       parameters = { model: model, messages: messages, temperature: temperature }
       parameters[:max_tokens] = max_tokens if max_tokens
@@ -60,7 +62,7 @@ class OpenaiClientService
         parameters: { model: model, file: file }
       )
 
-      text = response.dig("text")
+      text = response["text"]
       raise InvalidAudioError, "OpenAI returned empty transcript" if text.blank?
 
       text
@@ -126,14 +128,21 @@ class OpenaiClientService
     return if body.blank?
 
     case body
-    when Hash
-      body.dig("error", "message") || body.dig(:error, :message) || body.to_s
-    when String
-      parsed = JSON.parse(body) rescue nil
-      parsed&.dig("error", "message") || body
-    else
-      body.to_s
+    when Hash   then parse_hash_error_body(body)
+    when String then parse_string_error_body(body)
+    else             body.to_s
     end
+  end
+
+  def parse_hash_error_body(body)
+    body.dig("error", "message") || body.dig(:error, :message) || body.to_s
+  end
+
+  def parse_string_error_body(body)
+    parsed = JSON.parse(body)
+    parsed&.dig("error", "message") || body
+  rescue StandardError
+    body
   end
 end
 

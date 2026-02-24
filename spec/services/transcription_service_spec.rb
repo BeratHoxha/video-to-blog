@@ -67,17 +67,17 @@ RSpec.describe TranscriptionService do
       end
 
       it "raises TranscriptionError with clear message" do
-        expect {
+        expect do
           described_class.call(file_path: tempfile.path)
-        }.to raise_error(TranscriptionService::TranscriptionError, /rate limit/i)
+        end.to raise_error(TranscriptionService::TranscriptionError, /rate limit/i)
       end
     end
 
     context "with no source provided" do
       it "raises TranscriptionError" do
-        expect {
+        expect do
           described_class.call
-        }.to raise_error(TranscriptionService::TranscriptionError, /No source/)
+        end.to raise_error(TranscriptionService::TranscriptionError, /No source/)
       end
     end
   end

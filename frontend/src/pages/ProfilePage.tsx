@@ -42,8 +42,7 @@ export function ProfilePage() {
   const { currentUser, updateUser, csrfToken } = useAuth();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const initialTab =
-    tabParam === "plan" || tabParam === "account" ? tabParam : "account";
+  const initialTab = tabParam === "plan" || tabParam === "account" ? tabParam : "account";
   const [activeTab, setActiveTab] = useState<"account" | "plan">(initialTab);
 
   useEffect(() => {
@@ -54,9 +53,7 @@ export function ProfilePage() {
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-2xl mx-auto px-8 py-10">
         <h1 className="text-2xl font-bold text-white mb-1">Profile</h1>
-        <p className="text-gray-500 text-sm mb-8">
-          Manage your account and subscription.
-        </p>
+        <p className="text-gray-500 text-sm mb-8">Manage your account and subscription.</p>
 
         <div className="flex gap-1 mb-8 border-b border-gray-800">
           <TabButton
@@ -72,17 +69,9 @@ export function ProfilePage() {
         </div>
 
         {activeTab === "account" ? (
-          <AccountTab
-            user={currentUser}
-            csrfToken={csrfToken}
-            onUserUpdate={updateUser}
-          />
+          <AccountTab user={currentUser} csrfToken={csrfToken} onUserUpdate={updateUser} />
         ) : (
-          <PlanTab
-            user={currentUser}
-            csrfToken={csrfToken}
-            onUserUpdate={updateUser}
-          />
+          <PlanTab user={currentUser} csrfToken={csrfToken} onUserUpdate={updateUser} />
         )}
       </div>
     </div>
@@ -112,18 +101,10 @@ function TabButton({
   );
 }
 
-function FormField({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function FormField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
-        {label}
-      </label>
+      <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">{label}</label>
       {children}
     </div>
   );
@@ -216,15 +197,8 @@ function AccountTab({
         </FormField>
 
         <FormField label="Email">
-          <input
-            type="email"
-            value={user.email}
-            disabled
-            className={inputDisabledClass}
-          />
-          <p className="text-xs text-gray-600">
-            Email address cannot be changed.
-          </p>
+          <input type="email" value={user.email} disabled className={inputDisabledClass} />
+          <p className="text-xs text-gray-600">Email address cannot be changed.</p>
         </FormField>
       </div>
 
@@ -331,10 +305,7 @@ function PlanTab({
     <div className="space-y-6">
       <p className="text-sm text-gray-500 mb-6">
         You are currently on the{" "}
-        <span className="text-emerald-400 font-medium capitalize">
-          {user.plan}
-        </span>{" "}
-        plan.
+        <span className="text-emerald-400 font-medium capitalize">{user.plan}</span> plan.
       </p>
 
       {error && (
@@ -353,10 +324,10 @@ function PlanTab({
           const borderClass = isPremium
             ? "border-amber-500/40 bg-amber-500/[0.03]"
             : isBasic
-            ? "border-sky-500/40 bg-sky-500/[0.03]"
-            : isCurrent
-            ? "border-emerald-500 bg-emerald-500/5"
-            : "border-gray-800 bg-gray-900";
+              ? "border-sky-500/40 bg-sky-500/[0.03]"
+              : isCurrent
+                ? "border-emerald-500 bg-emerald-500/5"
+                : "border-gray-800 bg-gray-900";
 
           return (
             <div
@@ -367,11 +338,7 @@ function PlanTab({
                 <div className="flex items-center gap-2 mb-0.5">
                   <h3
                     className={`text-sm font-bold ${
-                      isPremium
-                        ? "text-amber-400"
-                        : isBasic
-                        ? "text-sky-400"
-                        : "text-white"
+                      isPremium ? "text-amber-400" : isBasic ? "text-sky-400" : "text-white"
                     }`}
                   >
                     {plan.label}
@@ -388,19 +355,14 @@ function PlanTab({
                   )}
                 </div>
                 <div className="flex items-baseline gap-0.5">
-                  <span className="text-xl font-extrabold text-white">
-                    {plan.price}
-                  </span>
+                  <span className="text-xl font-extrabold text-white">{plan.price}</span>
                   <span className="text-xs text-gray-500">{plan.period}</span>
                 </div>
               </div>
 
               <ul className="flex flex-wrap gap-x-5 gap-y-1 flex-1">
                 {plan.features.map((f) => (
-                  <li
-                    key={f}
-                    className="flex items-center gap-1.5 text-xs text-gray-400"
-                  >
+                  <li key={f} className="flex items-center gap-1.5 text-xs text-gray-400">
                     <Check size={11} className="text-emerald-500 shrink-0" />
                     {f}
                   </li>
@@ -422,8 +384,8 @@ function PlanTab({
                         isPremium
                           ? "bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/50"
                           : isBasic
-                          ? "bg-sky-500/10 border-sky-500/30 text-sky-400 hover:bg-sky-500/20 hover:border-sky-500/50"
-                          : "bg-gray-800 border-gray-700 text-white hover:bg-gray-700 hover:border-gray-600"
+                            ? "bg-sky-500/10 border-sky-500/30 text-sky-400 hover:bg-sky-500/20 hover:border-sky-500/50"
+                            : "bg-gray-800 border-gray-700 text-white hover:bg-gray-700 hover:border-gray-600"
                       }`}
                   >
                     {isLoading ? "Switching…" : `Switch to ${plan.label}`}

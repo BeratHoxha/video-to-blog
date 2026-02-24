@@ -40,8 +40,10 @@ export function GenerationModal({ articleId, onClose }: GenerationModalProps) {
           style={{ maxHeight: "85vh" }}
         >
           {/* Header */}
-          <div className="shrink-0 flex items-center justify-between px-6 py-4
-                          border-b border-gray-800">
+          <div
+            className="shrink-0 flex items-center justify-between px-6 py-4
+                          border-b border-gray-800"
+          >
             <div>
               <h2 className="font-semibold text-white">Your article preview</h2>
               <p className="text-xs text-gray-500 mt-0.5">

@@ -43,9 +43,9 @@ RSpec.describe OpenaiClientService do
       )
       allow(audio_client).to receive(:transcribe).and_raise(rate_limit_error)
 
-      expect {
+      expect do
         service.transcribe(file_path: file.path)
-      }.to raise_error(OpenaiClientService::RateLimitError)
+      end.to raise_error(OpenaiClientService::RateLimitError)
 
       file.close
       file.unlink

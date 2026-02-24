@@ -10,7 +10,7 @@ FactoryBot.define do
     include_images { false }
     use_external_links { false }
     status { :complete }
-    word_count { content&.gsub(/<[^>]+>/, " ")&.split&.length || 0 }
+    word_count { content ? content.gsub(/<[^>]+>/, " ").split.length : 0 }
 
     trait :processing do
       status { :processing }

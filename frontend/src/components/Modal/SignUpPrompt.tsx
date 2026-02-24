@@ -16,9 +16,7 @@ export function SignUpPrompt({ onSignUp, onSeePricing }: SignUpPromptProps) {
     >
       <div className="flex items-center gap-2 mb-4">
         <Zap size={18} className="text-emerald-500" />
-        <h3 className="text-lg font-semibold text-white">
-          Unlock the full article
-        </h3>
+        <h3 className="text-lg font-semibold text-white">Unlock the full article</h3>
       </div>
       <p className="text-sm text-gray-400 mb-5">
         You just saw a preview. Sign up free to generate complete, unrestricted articles.

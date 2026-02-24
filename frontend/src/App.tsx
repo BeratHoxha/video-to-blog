@@ -22,15 +22,9 @@ export function App({ user, csrfToken }: AppProps) {
             <Route element={<AuthenticatedLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/dashboard/articles" element={<ArticlesPage />} />
-              <Route
-                path="/dashboard/articles/:id"
-                element={<ArticlePage />}
-              />
+              <Route path="/dashboard/articles/:id" element={<ArticlePage />} />
               <Route path="/dashboard/profile" element={<ProfilePage />} />
-              <Route
-                path="*"
-                element={<Navigate to="/dashboard" replace />}
-              />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Route>
         </Routes>

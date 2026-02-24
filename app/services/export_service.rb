@@ -42,7 +42,7 @@ class ExportService
     pdf.text(@article.title.to_s, size: 24, style: :bold, leading: 6)
     pdf.move_down 12
 
-    paragraphs = plain_text.split(/\n+/).reject(&:blank?)
+    paragraphs = plain_text.split(/\n+/).compact_blank
     paragraphs.each do |paragraph|
       pdf.text(paragraph, size: 11, leading: 4)
       pdf.move_down 8
@@ -59,7 +59,7 @@ class ExportService
       doc.h1 @article.title.to_s
       doc.p
 
-      paragraphs = plain_text.split(/\n+/).reject(&:blank?)
+      paragraphs = plain_text.split(/\n+/).compact_blank
       paragraphs.each { |para| doc.p para }
     end
 
@@ -79,7 +79,7 @@ class ExportService
       )
       sheet.add_row []
 
-      paragraphs = plain_text.split(/\n+/).reject(&:blank?)
+      paragraphs = plain_text.split(/\n+/).compact_blank
       paragraphs.each { |p| sheet.add_row [p] }
     end
 

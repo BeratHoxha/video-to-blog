@@ -25,7 +25,7 @@ interface FormState {
 
 export function VideoToBlogEngine({
   authenticated,
-  userTier,
+  userTier: _userTier,
   wordsRemaining,
   onArticleGenerated,
   onGuestGenerated,
@@ -116,9 +116,10 @@ export function VideoToBlogEngine({
             type="button"
             onClick={() => setInputMode(mode)}
             className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all
-              ${inputMode === mode
-                ? "bg-gray-700 text-white shadow-sm"
-                : "text-gray-500 hover:text-gray-300"
+              ${
+                inputMode === mode
+                  ? "bg-gray-700 text-white shadow-sm"
+                  : "text-gray-500 hover:text-gray-300"
               }`}
           >
             {mode === "url" ? "Video URL" : "Upload File"}
@@ -132,7 +133,8 @@ export function VideoToBlogEngine({
           <div className="flex-1 text-sm">
             <p className="font-medium text-amber-400">Monthly word limit reached</p>
             <p className="text-amber-400/70 mt-0.5">
-              You've used all 2,000 free words this month. Upgrade your plan to keep generating articles.
+              You've used all 2,000 free words this month. Upgrade your plan to keep generating
+              articles.
             </p>
           </div>
           {onUpgrade && (
@@ -156,11 +158,7 @@ export function VideoToBlogEngine({
         )}
 
         {/* Options */}
-        <OptionsPanel
-          {...form}
-          authenticated={authenticated}
-          onChange={handleOptionChange}
-        />
+        <OptionsPanel {...form} authenticated={authenticated} onChange={handleOptionChange} />
 
         {error && (
           <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">

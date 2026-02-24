@@ -29,11 +29,10 @@ export function WhatWeOffer() {
           <p className="text-xs font-semibold uppercase tracking-widest text-emerald-500 mb-3">
             Why Video To Blog
           </p>
-          <h2 className="text-3xl font-bold text-white">
-            More than just a transcription tool
-          </h2>
+          <h2 className="text-3xl font-bold text-white">More than just a transcription tool</h2>
           <p className="text-gray-400 mt-3 max-w-lg mx-auto text-sm leading-relaxed">
-            We exist because turning a great video into a great blog post should take minutes, not hours.
+            We exist because turning a great video into a great blog post should take minutes, not
+            hours.
           </p>
         </div>
 

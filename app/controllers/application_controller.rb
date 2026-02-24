@@ -2,9 +2,9 @@ class ApplicationController < ActionController::Base
   protect_from_forgery with: :exception
 
   def authenticate_user_api!
-    unless current_user
-      render json: { error: "Unauthorized" }, status: :unauthorized
-    end
+    return if current_user
+
+    render json: { error: "Unauthorized" }, status: :unauthorized
   end
 
   def current_user_json

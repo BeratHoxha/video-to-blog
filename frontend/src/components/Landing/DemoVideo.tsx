@@ -7,15 +7,15 @@ export function DemoVideo() {
         <p className="text-xs font-semibold uppercase tracking-widest text-emerald-500 mb-3">
           See it in action
         </p>
-        <h2 className="text-3xl font-bold text-white mb-8">
-          Watch how it works
-        </h2>
+        <h2 className="text-3xl font-bold text-white mb-8">Watch how it works</h2>
 
         {/* Video placeholder */}
         <div className="relative aspect-video bg-gray-900 border border-gray-700 rounded-2xl overflow-hidden group cursor-pointer">
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center
-                            shadow-lg shadow-emerald-500/30 group-hover:bg-emerald-400 transition-colors">
+            <div
+              className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center
+                            shadow-lg shadow-emerald-500/30 group-hover:bg-emerald-400 transition-colors"
+            >
               <Play size={24} className="text-white ml-1" />
             </div>
           </div>

@@ -1,8 +1,8 @@
 module Api
   class ArticlesController < ApplicationController
     protect_from_forgery with: :null_session
-    before_action :authenticate_user_api!, only: [:index, :destroy]
-    before_action :load_article, only: [:show, :status, :export, :destroy]
+    before_action :authenticate_user_api!, only: %i[index destroy]
+    before_action :load_article, only: %i[show status export destroy]
 
     def index
       articles = current_user.articles.completed.recent

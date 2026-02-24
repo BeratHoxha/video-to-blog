@@ -44,10 +44,7 @@ export function NewsletterSignup() {
             <span className="font-medium">You're subscribed!</span>
           </div>
         ) : (
-          <form
-            onSubmit={handleSubmit}
-            className="flex gap-2 flex-col sm:flex-row"
-          >
+          <form onSubmit={handleSubmit} className="flex gap-2 flex-col sm:flex-row">
             <input
               type="email"
               value={email}
@@ -65,11 +62,7 @@ export function NewsletterSignup() {
                          font-medium rounded-lg text-sm transition-colors disabled:opacity-60
                          flex items-center gap-2"
             >
-              {status === "loading" ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                "Subscribe"
-              )}
+              {status === "loading" ? <Loader2 size={14} className="animate-spin" /> : "Subscribe"}
             </button>
           </form>
         )}

@@ -6,11 +6,7 @@ interface UseTypewriterOptions {
   onComplete?: () => void;
 }
 
-export function useTypewriter({
-  text,
-  charDelayMs = 12,
-  onComplete,
-}: UseTypewriterOptions) {
+export function useTypewriter({ text, charDelayMs = 12, onComplete }: UseTypewriterOptions) {
   const [displayed, setDisplayed] = useState("");
   const [isComplete, setIsComplete] = useState(false);
   const indexRef = useRef(0);

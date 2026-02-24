@@ -16,10 +16,7 @@ export function useAIBot() {
   const [error, setError] = useState<string | null>(null);
   const [upgradeRequired, setUpgradeRequired] = useState(false);
 
-  const rewrite = async (
-    selection: string,
-    prompt: string
-  ): Promise<AIBotResult | null> => {
+  const rewrite = async (selection: string, prompt: string): Promise<AIBotResult | null> => {
     setIsLoading(true);
     setError(null);
     setUpgradeRequired(false);

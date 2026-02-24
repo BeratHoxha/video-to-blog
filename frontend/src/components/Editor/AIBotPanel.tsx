@@ -16,11 +16,7 @@ interface AIBotPanelProps {
   callsRemaining: number | null;
 }
 
-export function AIBotPanel({
-  selectedText,
-  onApply,
-  callsRemaining,
-}: AIBotPanelProps) {
+export function AIBotPanel({ selectedText, onApply, callsRemaining }: AIBotPanelProps) {
   const [prompt, setPrompt] = useState("");
   const { rewrite, isLoading, error, upgradeRequired } = useAIBot();
 
@@ -52,9 +48,7 @@ export function AIBotPanel({
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Selected text preview */}
         <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
-            Selected text
-          </p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Selected text</p>
           {hasSelection ? (
             <div className="bg-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-300 line-clamp-4 italic border-l-2 border-emerald-500">
               {selectedText.slice(0, 200)}
@@ -69,9 +63,7 @@ export function AIBotPanel({
 
         {/* Quick prompts */}
         <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
-            Quick actions
-          </p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Quick actions</p>
           <div className="flex flex-wrap gap-2">
             {QUICK_PROMPTS.map((p) => (
               <button
@@ -91,9 +83,7 @@ export function AIBotPanel({
 
         {/* Custom prompt */}
         <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
-            Custom instruction
-          </p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Custom instruction</p>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -119,18 +109,17 @@ export function AIBotPanel({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               className={`flex items-start gap-2 rounded-lg p-3 text-sm
-                ${upgradeRequired
-                  ? "bg-amber-500/10 border border-amber-500/30 text-amber-400"
-                  : "bg-red-500/10 border border-red-500/20 text-red-400"}`}
+                ${
+                  upgradeRequired
+                    ? "bg-amber-500/10 border border-amber-500/30 text-amber-400"
+                    : "bg-red-500/10 border border-red-500/20 text-red-400"
+                }`}
             >
               <AlertCircle size={14} className="mt-0.5 shrink-0" />
               <div>
                 <p>{error}</p>
                 {upgradeRequired && (
-                  <a
-                    href="#pricing"
-                    className="underline mt-1 inline-block font-medium"
-                  >
+                  <a href="#pricing" className="underline mt-1 inline-block font-medium">
                     View upgrade options →
                   </a>
                 )}

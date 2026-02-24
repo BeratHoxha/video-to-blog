@@ -6,11 +6,7 @@ import type { User } from "@/types";
 interface SidebarProps {
   user: Pick<
     User,
-    | "name"
-    | "plan"
-    | "words_used_this_month"
-    | "words_remaining"
-    | "ai_bot_calls_remaining"
+    "name" | "plan" | "words_used_this_month" | "words_remaining" | "ai_bot_calls_remaining"
   >;
 }
 
@@ -22,7 +18,7 @@ export function Sidebar({ user }: SidebarProps) {
 
   const isNew = location.pathname === "/dashboard";
   const isHistory = location.pathname.startsWith("/dashboard/articles");
-  const isProfile = location.pathname === "/dashboard/profile";
+  const _isProfile = location.pathname === "/dashboard/profile";
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -47,22 +43,15 @@ export function Sidebar({ user }: SidebarProps) {
   const isFree = user.plan === "free";
   const wordsUsed = user.words_used_this_month;
   const wordTotal = isFree ? 2000 : null;
-  const wordPercent = wordTotal
-    ? Math.min((wordsUsed / wordTotal) * 100, 100)
-    : 0;
+  const wordPercent = wordTotal ? Math.min((wordsUsed / wordTotal) * 100, 100) : 0;
   const aiRewritesUsed =
-    user.ai_bot_calls_remaining !== null
-      ? 10 - user.ai_bot_calls_remaining
-      : null;
+    user.ai_bot_calls_remaining !== null ? 10 - user.ai_bot_calls_remaining : null;
 
   return (
     <aside className="w-60 shrink-0 flex flex-col h-screen border-r border-gray-800 bg-gray-900">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-gray-800">
-        <a
-          href="/"
-          className="flex items-center gap-1 font-bold text-lg tracking-tight"
-        >
+        <a href="/" className="flex items-center gap-1 font-bold text-lg tracking-tight">
           <span className="text-white">Video</span>
           <span className="text-emerald-500">·</span>
           <span className="text-white">Blog</span>
@@ -107,9 +96,7 @@ export function Sidebar({ user }: SidebarProps) {
         {isFree && user.ai_bot_calls_remaining !== null && (
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500">AI rewrites used</span>
-            <span className="text-xs font-medium text-gray-300">
-              {aiRewritesUsed} / 10
-            </span>
+            <span className="text-xs font-medium text-gray-300">{aiRewritesUsed} / 10</span>
           </div>
         )}
 
@@ -136,12 +123,8 @@ export function Sidebar({ user }: SidebarProps) {
               {user.name?.[0]?.toUpperCase() ?? "U"}
             </div>
             <div className="min-w-0 text-left">
-              <p className="text-xs font-medium text-white truncate">
-                {user.name}
-              </p>
-              <p className="text-xs text-gray-600 capitalize">
-                {user.plan} plan
-              </p>
+              <p className="text-xs font-medium text-white truncate">{user.name}</p>
+              <p className="text-xs text-gray-600 capitalize">{user.plan} plan</p>
             </div>
           </button>
 

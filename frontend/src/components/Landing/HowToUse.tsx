@@ -34,14 +34,15 @@ export function HowToUse() {
           <p className="text-xs font-semibold uppercase tracking-widest text-emerald-500 mb-3">
             Simple workflow
           </p>
-          <h2 className="text-3xl font-bold text-white">
-            How to use Video To Blog
-          </h2>
+          <h2 className="text-3xl font-bold text-white">How to use Video To Blog</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           {STEPS.map((step, i) => (
-            <div key={i} className="flex flex-col items-start md:items-center text-left md:text-center">
+            <div
+              key={i}
+              className="flex flex-col items-start md:items-center text-left md:text-center"
+            >
               <div className="w-12 h-12 rounded-full border-2 border-emerald-500/40 flex items-center justify-center mb-4">
                 <span className="text-sm font-bold text-emerald-500">{step.number}</span>
               </div>

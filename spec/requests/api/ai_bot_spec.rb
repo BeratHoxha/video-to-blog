@@ -10,8 +10,10 @@ RSpec.describe "Api::AiBot", type: :request do
     end
 
     context "when authenticated as free user under limit" do
-      let(:user) { create(:user, :free, ai_bot_calls_this_week: 3,
-                                         ai_bot_calls_reset_at: Time.current) }
+      let(:user) do
+        create(:user, :free, ai_bot_calls_this_week: 3,
+                             ai_bot_calls_reset_at: Time.current)
+      end
 
       before do
         sign_in user
@@ -26,7 +28,7 @@ RSpec.describe "Api::AiBot", type: :request do
       it "returns 200 with rewritten text" do
         post "/api/ai_bot", params: { selection: "original", prompt: "make professional" }
         expect(response).to have_http_status(:ok)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json["result"]).to eq("Rewritten text")
       end
     end
@@ -39,7 +41,7 @@ RSpec.describe "Api::AiBot", type: :request do
       it "returns 403 with upgrade message" do
         post "/api/ai_bot", params: { selection: "text", prompt: "rewrite" }
         expect(response).to have_http_status(:forbidden)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json["upgrade_required"]).to be true
       end
     end
