@@ -77,3 +77,19 @@
   content: attr(data-placeholder);
   @apply text-gray-600 pointer-events-none float-left h-0;
 }
+
+.tiptap a {
+  @apply text-blue-400 underline cursor-pointer;
+}
+
+.tiptap a:hover {
+  @apply text-blue-300;
+}
+
+.tiptap img {
+  @apply max-w-full rounded-lg my-4;
+}
+
+.tiptap hr {
+  @apply border-gray-700 my-8;
+}

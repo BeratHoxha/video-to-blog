@@ -18,6 +18,12 @@ class ArticleGenerationJob < ApplicationJob
     title   = extract_title(content) || "Untitled Article"
     content = strip_leading_h1(content)
 
+    content = ImageEnrichmentService.call(html: content, article_title: title) \
+      if article.include_images
+
+    content = ExternalLinksEnrichmentService.call(html: content, article_title: title) \
+      if article.use_external_links
+
     word_count = content.gsub(/<[^>]+>/, " ").split.length
 
     article.update!(

@@ -74,10 +74,12 @@ class ArticleGenerationService
 
     instructions = []
     instructions << style
-    instructions << "Include relevant images placeholders marked as [IMAGE]." \
-      if @options[:include_images]
-    instructions << "Include relevant external links where appropriate." \
-      if @options[:use_external_links]
+    if @options[:include_images]
+      instructions << "Where an image would strengthen the content, insert a placeholder " \
+                      "formatted exactly as [IMAGE: brief description of the ideal image]. " \
+                      "Use a specific, searchable description (e.g. " \
+                      "[IMAGE: solar panel installation on rooftop])."
+    end
     instructions << "Additional instructions: #{@options[:additional_instructions]}" \
       if @options[:additional_instructions].present?
 

@@ -3,6 +3,8 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import type { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
+import Image from "@tiptap/extension-image";
+import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import { AIBotPanel } from "./AIBotPanel";
 import { Bold, Italic, Heading2, Heading3, Copy, Download, Check, Loader2 } from "lucide-react";
@@ -110,6 +112,12 @@ export function ArticleEditor({
     extensions: [
       StarterKit,
       Highlight,
+      Image.configure({ inline: false, allowBase64: false }),
+      Link.configure({
+        openOnClick: true,
+        autolink: true,
+        HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" },
+      }),
       Placeholder.configure({ placeholder: "Your article will appear here..." }),
     ],
     content: stripLeadingH1(animatedContent ?? article.content ?? ""),
