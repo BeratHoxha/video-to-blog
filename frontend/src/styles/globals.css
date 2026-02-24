@@ -57,16 +57,35 @@
   @apply text-xl font-medium mb-2 text-white;
 }
 
+.tiptap h4 {
+  @apply text-lg font-medium mb-2 text-gray-200;
+}
+
+.tiptap u {
+  text-decoration: underline;
+}
+
 .tiptap p {
   @apply mb-4 text-gray-200;
 }
 
+/* list-outside + explicit padding keeps bullets outside the text column */
 .tiptap ul {
-  @apply list-disc list-inside mb-4 text-gray-200;
+  @apply list-disc pl-6 mb-4 text-gray-200;
 }
 
 .tiptap ol {
-  @apply list-decimal list-inside mb-4 text-gray-200;
+  @apply list-decimal pl-6 mb-4 text-gray-200;
+}
+
+.tiptap li {
+  @apply text-gray-200 mb-1;
+}
+
+/* nested lists */
+.tiptap li > ul,
+.tiptap li > ol {
+  @apply mt-1 mb-0;
 }
 
 .tiptap blockquote {
@@ -76,4 +95,24 @@
 .tiptap p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   @apply text-gray-600 pointer-events-none float-left h-0;
+}
+
+/* Links */
+.tiptap a {
+  @apply text-blue-400 underline cursor-pointer;
+}
+
+.tiptap a:hover {
+  @apply text-blue-300;
+}
+
+/* Images */
+.tiptap img {
+  @apply max-w-full rounded-lg my-4;
+  display: block;
+}
+
+/* Horizontal rule (used before references section) */
+.tiptap hr {
+  @apply border-gray-700 my-8;
 }

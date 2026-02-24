@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { TypewriterText } from "@/components/shared/TypewriterText";
 import { SignUpPrompt } from "./SignUpPrompt";
 import { useGenerationPoller } from "@/hooks/useGenerationPoller";
+import { useRotatingMessage } from "@/hooks/useRotatingMessage";
 
 interface GenerationModalProps {
   articleId: number;
@@ -12,6 +13,7 @@ interface GenerationModalProps {
 
 export function GenerationModal({ articleId, onClose }: GenerationModalProps) {
   const [content, setContent] = useState<string | null>(null);
+  const loadingMessage = useRotatingMessage(10_000);
 
   const { status } = useGenerationPoller({
     articleId,
@@ -93,8 +95,11 @@ export function GenerationModal({ articleId, onClose }: GenerationModalProps) {
                   <div className="h-4 bg-gray-800 rounded w-4/5" />
                 </div>
 
-                <p className="text-xs text-gray-500 text-center pt-1">
-                  Transcribing and writing your article…
+                <p
+                  key={loadingMessage}
+                  className="text-xs text-gray-500 text-center pt-1 transition-opacity duration-500"
+                >
+                  {loadingMessage}
                 </p>
               </div>
             ) : (
