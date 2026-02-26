@@ -4,7 +4,6 @@ import { Lock } from "lucide-react";
 interface OptionsPanelProps {
   outputType: string;
   outputFormat: string;
-  includeImages: boolean;
   useExternalLinks: boolean;
   additionalInstructions: string;
   authenticated: boolean;
@@ -14,7 +13,6 @@ interface OptionsPanelProps {
 export function OptionsPanel({
   outputType,
   outputFormat,
-  includeImages,
   useExternalLinks,
   additionalInstructions,
   authenticated,
@@ -74,18 +72,11 @@ export function OptionsPanel({
       </div>
 
       {/* Toggles */}
-      <div className="grid grid-cols-2 gap-4">
-        <Toggle
-          label="Include Images"
-          checked={includeImages}
-          onChange={(v) => onChange("includeImages", v)}
-        />
-        <Toggle
-          label="External Links"
-          checked={useExternalLinks}
-          onChange={(v) => onChange("useExternalLinks", v)}
-        />
-      </div>
+      <Toggle
+        label="External Links"
+        checked={useExternalLinks}
+        onChange={(v) => onChange("useExternalLinks", v)}
+      />
 
       {/* Additional Instructions */}
       <div>

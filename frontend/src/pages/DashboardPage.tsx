@@ -73,7 +73,7 @@ export function DashboardPage() {
         <div className="max-w-2xl mx-auto px-6 py-10">
           <h1 className="text-2xl font-bold text-white mb-2">New Article</h1>
           <p className="text-gray-500 text-sm mb-8">
-            Paste a video URL or upload a file to generate your article.
+            Paste a YouTube URL to generate your article.
           </p>
           {generationError && (
             <p className="mb-6 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
