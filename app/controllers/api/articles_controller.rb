@@ -1,8 +1,11 @@
 module Api
   class ArticlesController < ApplicationController
-    protect_from_forgery with: :null_session
-    before_action :authenticate_user_api!, only: %i[index destroy]
-    before_action :load_article, only: %i[show status export destroy]
+    # The parent ApplicationController uses protect_from_forgery with: :exception.
+    # Skip token verification for this API controller — security comes from
+    # authenticate_user_api! (Devise session) + per-action ownership checks.
+    skip_before_action :verify_authenticity_token
+    before_action :authenticate_user_api!, only: %i[index update destroy]
+    before_action :load_article, only: %i[show status export update destroy]
 
     def index
       articles = current_user.articles.completed.recent
@@ -44,6 +47,16 @@ module Api
                 filename: "#{@article.title.parameterize}.#{format}",
                 disposition: "attachment"
     rescue ExportService::ExportError => e
+      render json: { error: e.message }, status: :unprocessable_entity
+    end
+
+    def update
+      return render json: { error: "Unauthorized" }, status: :unauthorized \
+        unless @article.user == current_user
+
+      @article.update!(content: params[:content].to_s)
+      render json: { status: "saved", word_count: @article.word_count }
+    rescue ActiveRecord::RecordInvalid => e
       render json: { error: e.message }, status: :unprocessable_entity
     end
 

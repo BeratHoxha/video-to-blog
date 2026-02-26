@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { VideoToBlogEngine } from "@/components/Engine/VideoToBlogEngine";
 import { useGenerationPoller } from "@/hooks/useGenerationPoller";
+import { useRotatingMessage } from "@/hooks/useRotatingMessage";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
@@ -10,6 +11,7 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const [pendingArticleId, setPendingArticleId] = useState<number | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const loadingMessage = useRotatingMessage(10_000);
 
   const handleArticleGenerated = (articleId: number) => {
     setPendingArticleId(articleId);
@@ -46,9 +48,21 @@ export function DashboardPage() {
   return (
     <div className="flex-1 overflow-y-auto">
       {isGenerating ? (
-        <div className="flex flex-col items-center justify-center h-full gap-4 text-gray-500">
-          <Loader2 size={32} className="animate-spin text-emerald-500" />
-          <p className="text-sm">Transcribing and writing your article...</p>
+        <div className="flex flex-col items-center justify-center h-full gap-5 px-6 text-center">
+          <div className="relative">
+            <div className="w-14 h-14 rounded-full border-2 border-gray-800 flex items-center justify-center">
+              <Loader2 size={26} className="animate-spin text-emerald-500" />
+            </div>
+          </div>
+          <div className="space-y-2 max-w-sm">
+            <p className="text-sm font-medium text-white">Working on your article…</p>
+            <p
+              key={loadingMessage}
+              className="text-sm text-gray-500 transition-opacity duration-500"
+            >
+              {loadingMessage}
+            </p>
+          </div>
         </div>
       ) : (
         <div className="max-w-2xl mx-auto px-6 py-10">
