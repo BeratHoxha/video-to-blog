@@ -22,6 +22,7 @@ Rails.application.routes.draw do
       end
     end
     resources :generations, only: [:create]
+    post "/images/upload", to: "images#upload"
     post "/ai_bot", to: "ai_bot#rewrite"
     post "/newsletter", to: "newsletter#subscribe"
     patch "/users/me",   to: "users#update_profile"

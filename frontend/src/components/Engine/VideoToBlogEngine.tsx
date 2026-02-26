@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { UrlInput } from "./UrlInput";
-import { FileDropZone } from "./FileDropZone";
 import { OptionsPanel } from "./OptionsPanel";
 import { Loader2 } from "lucide-react";
 
@@ -13,12 +12,9 @@ interface VideoToBlogEngineProps {
   onUpgrade?: () => void;
 }
 
-type InputMode = "url" | "file";
-
 interface FormState {
   outputType: string;
   outputFormat: string;
-  includeImages: boolean;
   useExternalLinks: boolean;
   additionalInstructions: string;
 }
@@ -32,16 +28,13 @@ export function VideoToBlogEngine({
   onUpgrade,
 }: VideoToBlogEngineProps) {
   const isOverLimit = typeof wordsRemaining === "number" && wordsRemaining <= 0;
-  const [inputMode, setInputMode] = useState<InputMode>("url");
   const [url, setUrl] = useState("");
-  const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState<FormState>({
     outputType: "Blog-Driven",
     outputFormat: "pdf",
-    includeImages: false,
     useExternalLinks: false,
     additionalInstructions: "",
   });
@@ -64,8 +57,8 @@ export function VideoToBlogEngine({
       return;
     }
 
-    if (!url && !file) {
-      setError("Please provide a video URL or upload a file.");
+    if (!url.trim()) {
+      setError("Please paste a YouTube URL to get started.");
       return;
     }
 
@@ -73,11 +66,9 @@ export function VideoToBlogEngine({
 
     try {
       const formData = new FormData();
-      if (url) formData.append("source_url", url);
-      if (file) formData.append("source_file", file);
+      formData.append("source_url", url);
       formData.append("output_type", form.outputType);
       formData.append("output_format", form.outputFormat);
-      formData.append("include_images", String(form.includeImages));
       formData.append("use_external_links", String(form.useExternalLinks));
       formData.append("additional_instructions", form.additionalInstructions);
 
@@ -108,25 +99,6 @@ export function VideoToBlogEngine({
 
   return (
     <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-2xl w-full">
-      {/* Input mode tabs */}
-      <div className="flex gap-1 mb-5 p-1 bg-gray-800 rounded-lg">
-        {(["url", "file"] as InputMode[]).map((mode) => (
-          <button
-            key={mode}
-            type="button"
-            onClick={() => setInputMode(mode)}
-            className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all
-              ${
-                inputMode === mode
-                  ? "bg-gray-700 text-white shadow-sm"
-                  : "text-gray-500 hover:text-gray-300"
-              }`}
-          >
-            {mode === "url" ? "Video URL" : "Upload File"}
-          </button>
-        ))}
-      </div>
-
       {isOverLimit && (
         <div className="mb-5 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
           <span className="mt-0.5 text-amber-400">⚠</span>
@@ -150,14 +122,8 @@ export function VideoToBlogEngine({
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Input */}
-        {inputMode === "url" ? (
-          <UrlInput value={url} onChange={setUrl} />
-        ) : (
-          <FileDropZone onFileSelect={setFile} selectedFile={file} />
-        )}
+        <UrlInput value={url} onChange={setUrl} />
 
-        {/* Options */}
         <OptionsPanel {...form} authenticated={authenticated} onChange={handleOptionChange} />
 
         {error && (
