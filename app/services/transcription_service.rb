@@ -1,4 +1,5 @@
 require "net/http"
+require "open3"
 
 class TranscriptionService
   class TranscriptionError < StandardError; end
@@ -10,6 +11,7 @@ class TranscriptionService
   TRANSCRIPTION_MODEL = "gpt-4o-mini-transcribe".freeze
   YT_DLP_BIN = `which yt-dlp`.strip.freeze
   FFMPEG_BIN = `which ffmpeg`.strip.freeze
+  CHUNK_DURATION_SECONDS = 600
 
   def self.call(source_url: nil, file_path: nil, trim_seconds: nil)
     new(source_url: source_url, file_path: file_path, trim_seconds: trim_seconds).call
@@ -122,10 +124,12 @@ class TranscriptionService
   end
 
   def transcribe_file_with_openai(file_path)
-    OpenaiClientService.transcribe(
-      file_path: file_path,
-      model: TRANSCRIPTION_MODEL
-    )
+    duration = audio_duration(file_path)
+    if duration && duration > CHUNK_DURATION_SECONDS
+      transcribe_in_chunks(file_path)
+    else
+      call_openai_transcribe(file_path)
+    end
   rescue OpenaiClientService::RateLimitError => e
     raise TranscriptionError, "Transcription rate limit exceeded: #{e.message}"
   rescue OpenaiClientService::InvalidAudioError => e
@@ -134,5 +138,47 @@ class TranscriptionService
     raise TranscriptionError, "Transcription model unavailable: #{e.message}"
   rescue OpenaiClientService::OpenAIServiceError => e
     raise TranscriptionError, "OpenAI transcription failed: #{e.message}"
+  end
+
+  def audio_duration(file_path)
+    return nil if FFMPEG_BIN.blank?
+
+    _out, stderr = Open3.capture3(FFMPEG_BIN, "-i", file_path)
+    match = stderr.match(/Duration:\s*(\d+):(\d+):([\d.]+)/)
+    return nil unless match
+
+    (match[1].to_i * 3600) + (match[2].to_i * 60) + match[3].to_f
+  rescue StandardError
+    nil
+  end
+
+  def transcribe_in_chunks(file_path)
+    Dir.mktmpdir("chunks") do |tmpdir|
+      chunks = split_audio(file_path, tmpdir)
+      chunks.map { |chunk| call_openai_transcribe(chunk) }.join(" ")
+    end
+  end
+
+  def split_audio(file_path, tmpdir)
+    ext = File.extname(file_path).presence || ".mp3"
+    pattern = File.join(tmpdir, "chunk_%03d#{ext}")
+
+    success = system(
+      FFMPEG_BIN, "-y",
+      "-i", file_path,
+      "-f", "segment",
+      "-segment_time", CHUNK_DURATION_SECONDS.to_s,
+      "-c", "copy",
+      pattern,
+      out: File::NULL, err: File::NULL
+    )
+
+    raise TranscriptionError, "Failed to split audio into chunks" unless success
+
+    Dir.glob(File.join(tmpdir, "chunk_*#{ext}"))
+  end
+
+  def call_openai_transcribe(file_path)
+    OpenaiClientService.transcribe(file_path: file_path, model: TRANSCRIPTION_MODEL)
   end
 end

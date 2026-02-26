@@ -73,6 +73,68 @@ RSpec.describe TranscriptionService do
       end
     end
 
+    context "with a long audio file" do
+      let(:tempfile) do
+        file = Tempfile.new(["audio", ".mp3"])
+        file.write("audio-bytes")
+        file.rewind
+        file
+      end
+
+      after do
+        tempfile.close
+        tempfile.unlink
+      end
+
+      before do
+        allow_any_instance_of(described_class)
+          .to receive(:audio_duration)
+          .and_return(1800)
+        allow_any_instance_of(described_class)
+          .to receive(:split_audio)
+          .and_return(["/tmp/chunk_000.mp3", "/tmp/chunk_001.mp3", "/tmp/chunk_002.mp3"])
+        allow(OpenaiClientService)
+          .to receive(:transcribe)
+          .and_return("chunk text")
+      end
+
+      it "transcribes each chunk and joins the results" do
+        result = described_class.call(file_path: tempfile.path)
+
+        expect(result).to eq("chunk text chunk text chunk text")
+        expect(OpenaiClientService).to have_received(:transcribe).exactly(3).times
+      end
+    end
+
+    context "when audio splitting fails" do
+      let(:tempfile) do
+        file = Tempfile.new(["audio", ".mp3"])
+        file.write("audio-bytes")
+        file.rewind
+        file
+      end
+
+      after do
+        tempfile.close
+        tempfile.unlink
+      end
+
+      before do
+        allow_any_instance_of(described_class)
+          .to receive(:audio_duration)
+          .and_return(1800)
+        allow_any_instance_of(described_class)
+          .to receive(:split_audio)
+          .and_raise(TranscriptionService::TranscriptionError, "Failed to split audio into chunks")
+      end
+
+      it "raises TranscriptionError" do
+        expect do
+          described_class.call(file_path: tempfile.path)
+        end.to raise_error(TranscriptionService::TranscriptionError, /split/i)
+      end
+    end
+
     context "with no source provided" do
       it "raises TranscriptionError" do
         expect do

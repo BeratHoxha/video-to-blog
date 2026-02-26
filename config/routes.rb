@@ -15,7 +15,7 @@ Rails.application.routes.draw do
   post "/onboarding", to: "onboarding#complete"
 
   namespace :api do
-    resources :articles, only: %i[index show destroy] do
+    resources :articles, only: %i[index update show destroy] do
       member do
         get :status
         get :export

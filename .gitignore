@@ -41,3 +41,5 @@ node_modules
 .env
 .gitattributes
 .byebug_history
+
+.rubocop_cache/
