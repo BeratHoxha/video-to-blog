@@ -25,7 +25,7 @@ module Api
       return unless current_user
 
       format = params[:file_format].to_s.downcase
-      allowed = %w[pdf docx pptx]
+      allowed = %w[pdf docx pptx txt]
 
       unless allowed.include?(format)
         return render json: { error: "Invalid format" }, status: :bad_request
@@ -37,9 +37,12 @@ module Api
 
       content = ExportService.call(article: @article, format: format)
       mime_types = {
-        "pdf" => "application/pdf",
-        "docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "pptx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        "pdf"  => "application/pdf",
+        "docx" => "application/vnd.openxmlformats-officedocument" \
+                  ".wordprocessingml.document",
+        "pptx" => "application/vnd.openxmlformats-officedocument" \
+                  ".presentationml.presentation",
+        "txt"  => "text/plain"
       }
 
       send_data content,

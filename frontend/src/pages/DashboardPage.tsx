@@ -11,11 +11,13 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const [pendingArticleId, setPendingArticleId] = useState<number | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const loadingMessage = useRotatingMessage(10_000);
 
   const handleArticleGenerated = (articleId: number) => {
     setPendingArticleId(articleId);
     setIsGenerating(true);
+    setGenerationError(null);
   };
 
   useGenerationPoller({
@@ -42,6 +44,9 @@ export function DashboardPage() {
     onError: () => {
       setIsGenerating(false);
       setPendingArticleId(null);
+      setGenerationError(
+        "Generation failed. The video may be unavailable or its audio couldn't be processed. Please try a different video."
+      );
     },
   });
 
@@ -70,6 +75,11 @@ export function DashboardPage() {
           <p className="text-gray-500 text-sm mb-8">
             Paste a video URL or upload a file to generate your article.
           </p>
+          {generationError && (
+            <p className="mb-6 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
+              {generationError}
+            </p>
+          )}
           <VideoToBlogEngine
             authenticated={true}
             userTier={currentUser.plan}

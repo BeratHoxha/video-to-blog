@@ -20,6 +20,7 @@ class ExportService
     when "pdf"  then generate_pdf
     when "docx" then generate_docx
     when "pptx" then generate_pptx
+    when "txt"  then generate_txt
     else raise ExportError, "Unknown format: #{@format}"
     end
   end
@@ -32,6 +33,7 @@ class ExportService
   #   { type: :heading,   level: 1..4, text: String }
   #   { type: :paragraph, segments: [...] }
   #   { type: :list_item, segments: [...] }
+  #   { type: :image,     src: String }
   #   { type: :hr }
   #
   # Each segment: { text: String, href: String|nil, bold: Boolean, italic: Boolean }
@@ -52,8 +54,18 @@ class ExportService
         text = child.text.strip
         blocks << { type: :heading, level: child.name[1].to_i, text: text } if text.present?
       when "p"
-        segs = inline_segments(child)
-        blocks << { type: :paragraph, segments: segs } if segs.any?
+        # TipTap sometimes wraps block images in a <p>; unwrap those first.
+        img = child.children.find { |c| c.name == "img" }
+        if img && child.text.strip.empty?
+          src = img["src"].presence
+          blocks << { type: :image, src: src } if src
+        else
+          segs = inline_segments(child)
+          blocks << { type: :paragraph, segments: segs } if segs.any?
+        end
+      when "img"
+        src = child["src"].presence
+        blocks << { type: :image, src: src } if src
       when "ul", "ol"
         child.css("li").each do |li|
           segs = inline_segments(li)
@@ -130,6 +142,13 @@ class ExportService
         pdf.formatted_text(formatted, size: 11, leading: 4, indent_paragraphs: 12)
         pdf.move_down 4
 
+      when :image
+        data = fetch_image_data(block[:src])
+        if data
+          pdf.image StringIO.new(data), fit: [430, 300], position: :center
+          pdf.move_down 10
+        end
+
       when :hr
         pdf.move_down 6
         pdf.stroke_color "999999"
@@ -139,6 +158,24 @@ class ExportService
     end
 
     pdf.render
+  end
+
+  # Fetches raw image bytes. Tries Active Storage first (avoids an HTTP round-
+  # trip), then falls back to a plain HTTP request for external URLs.
+  def fetch_image_data(src)
+    if src.include?("/rails/active_storage/")
+      match = src.match(%r{/rails/active_storage/blobs/(?:redirect|proxy)/([^/?]+)/})
+      if match
+        blob = ActiveStorage::Blob.find_signed!(match[1])
+        return blob.download
+      end
+    end
+
+    require "open-uri"
+    URI.open(src, read_timeout: 10).read
+  rescue StandardError => e
+    Rails.logger.warn("ExportService: could not embed image #{src}: #{e.message}")
+    nil
   end
 
   def segments_to_prawn(segments)
@@ -230,55 +267,37 @@ class ExportService
   # ── PPTX ──────────────────────────────────────────────────────────────────
 
   def generate_pptx
-    package  = Axlsx::Package.new
-    workbook = package.workbook
+    PptxBuilderService.build(
+      title:  @article.title.to_s,
+      blocks: content_blocks
+    )
+  end
 
-    workbook.add_worksheet(name: @article.title.to_s.first(30)) do |sheet|
-      title_style = sheet.styles.add_style(b: true, sz: 16)
-      link_style  = sheet.styles.add_style(u: :single, fg_color: LINK_BLUE, sz: 11)
-      bold_style  = sheet.styles.add_style(b: true, sz: 11)
+  # ── TXT ───────────────────────────────────────────────────────────────────
 
-      sheet.add_row([@article.title.to_s], style: [title_style])
-      sheet.add_row([])
+  def generate_txt
+    title     = @article.title.to_s
+    separator = "=" * [title.length, 60].min
+    lines     = [title, separator, ""]
 
-      content_blocks.each do |block|
-        case block[:type]
-        when :heading
-          sz = xlsx_heading_size(block[:level])
-          sheet.add_row([block[:text]],
-                        style: [sheet.styles.add_style(b: true, sz: sz)])
-
-        when :paragraph
-          text  = segments_as_text(block[:segments])
-          style = block[:segments].any? { |s| s[:href].present? } ? link_style : nil
-          style ||= block[:segments].any? { |s| s[:bold] } ? bold_style : nil
-          style ? sheet.add_row([text], style: [style]) : sheet.add_row([text])
-
-        when :list_item
-          text  = "• #{segments_as_text(block[:segments])}"
-          style = block[:segments].any? { |s| s[:href].present? } ? link_style : nil
-          style ? sheet.add_row([text], style: [style]) : sheet.add_row([text])
-
-        when :hr
-          sheet.add_row(["─" * 30])
-        end
+    content_blocks.each do |block|
+      case block[:type]
+      when :heading
+        text = block[:text]
+        lines << ""
+        lines << text
+        lines << "-" * [text.length, 60].min
+      when :paragraph
+        lines << segments_as_text(block[:segments])
+        lines << ""
+      when :list_item
+        lines << "  • #{segments_as_text(block[:segments])}"
+      when :hr
+        lines << ""
+        lines << "-" * 40
       end
     end
 
-    tmp = Tempfile.new(["article", ".xlsx"])
-    tmp.close
-    package.serialize(tmp.path)
-    File.binread(tmp.path)
-  ensure
-    tmp&.unlink
-  end
-
-  def xlsx_heading_size(level)
-    case level
-    when 1 then 16
-    when 2 then 14
-    when 3 then 13
-    else        12
-    end
+    lines.join("\n")
   end
 end

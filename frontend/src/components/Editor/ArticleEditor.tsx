@@ -20,6 +20,7 @@ import {
   Heading4,
   Link as LinkIcon,
   Unlink,
+  ImagePlus,
   Copy,
   Download,
   Check,
@@ -116,12 +117,17 @@ export function ArticleEditor({
   const [selectionRange, setSelectionRange] = useState<{ from: number; to: number } | null>(null);
   const [copied, setCopied] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [callsRemaining, setCallsRemaining] = useState(user.ai_bot_calls_remaining);
 
   // Link editing state
   const [linkInputOpen, setLinkInputOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const linkInputRef = useRef<HTMLInputElement>(null);
+
+  // Image upload state
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Autosave state
   type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -342,11 +348,16 @@ export function ArticleEditor({
 
   const handleExport = async (format: string) => {
     setIsDownloading(true);
+    setExportError(null);
     try {
       // Flush any pending autosave so the export reads the latest content.
       await saveNow();
       const res = await fetch(`/api/articles/${article.id}/export?file_format=${format}`);
-      if (!res.ok) return;
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setExportError(data.error ?? "Export failed. Please try again.");
+        return;
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -354,6 +365,8 @@ export function ArticleEditor({
       a.download = `${article.title}.${format}`;
       a.click();
       URL.revokeObjectURL(url);
+    } catch {
+      setExportError("Export failed. Please try again.");
     } finally {
       setIsDownloading(false);
     }
@@ -397,6 +410,40 @@ export function ArticleEditor({
     setLinkInputOpen(false);
     setLinkUrl("");
   }, [editor]);
+
+  const handleImageFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !editor) return;
+
+      // Reset so the same file can be re-selected if needed
+      e.target.value = "";
+
+      setIsUploadingImage(true);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch("/api/images/upload", {
+          method: "POST",
+          headers: { "X-CSRF-Token": getCsrfToken() },
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const { error } = await res.json();
+          console.error("Image upload failed:", error);
+          return;
+        }
+
+        const { url } = await res.json();
+        editor.chain().focus().setImage({ src: url }).run();
+      } finally {
+        setIsUploadingImage(false);
+      }
+    },
+    [editor, getCsrfToken]
+  );
 
   if (!editor) return null;
 
@@ -521,6 +568,18 @@ export function ArticleEditor({
                 {isLinkActive ? <Unlink size={15} /> : <LinkIcon size={15} />}
               </ToolbarButton>
 
+              {/* Image upload button */}
+              <ToolbarButton
+                onClick={() => imageInputRef.current?.click()}
+                active={false}
+                title="Insert image"
+                disabled={isUploadingImage}
+              >
+                {isUploadingImage
+                  ? <Loader2 size={15} className="animate-spin" />
+                  : <ImagePlus size={15} />}
+              </ToolbarButton>
+
               <div className="flex-1" />
 
               {/* Autosave status */}
@@ -537,6 +596,13 @@ export function ArticleEditor({
               {saveStatus === "error" && (
                 <span className="flex items-center gap-1 text-xs text-red-400">
                   <CloudOff size={12} /> Save failed
+                </span>
+              )}
+
+              {/* Export error */}
+              {exportError && (
+                <span className="text-xs text-red-400 max-w-xs truncate" title={exportError}>
+                  {exportError}
                 </span>
               )}
 
@@ -581,6 +647,15 @@ export function ArticleEditor({
             <EditorContent editor={editor} />
           </div>
         </div>
+
+        {/* Hidden file input for image upload */}
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleImageFileChange}
+        />
       </div>
 
       {/* AI Bot Panel — always visible */}
@@ -601,11 +676,13 @@ function ToolbarButton({
   onClick,
   active,
   title,
+  disabled,
   children,
 }: {
   onClick: () => void;
   active: boolean;
   title: string;
+  disabled?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -615,7 +692,8 @@ function ToolbarButton({
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       title={title}
-      className={`p-1.5 rounded-md transition-colors
+      disabled={disabled}
+      className={`p-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed
         ${
           active
             ? "bg-emerald-500/20 text-emerald-400"
