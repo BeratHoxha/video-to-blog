@@ -86,10 +86,8 @@ export function AuthPage({ mode, errors, csrfToken }: AuthPageProps) {
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4">
       {/* Back to home */}
-      <a href="/" className="mb-8 flex items-center gap-1 font-bold text-lg tracking-tight">
-        <span className="text-white">Video</span>
-        <span className="text-emerald-500">·</span>
-        <span className="text-white">Blog</span>
+      <a href="/" className="mb-8">
+        <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
       </a>
 
       <div className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl p-8">
