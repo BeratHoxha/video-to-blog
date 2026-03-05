@@ -32,9 +32,10 @@ module Api
       current_user.reset_words_if_needed!
       return if current_user.words_remaining.positive?
 
-      msg = "You've used all 2,000 words in your free plan this month. " \
-            "Upgrade to keep generating."
-      render json: { error: msg }, status: :unprocessable_entity
+      render json: {
+        error: "You've used all 2,000 words in your free plan this month. " \
+               "Upgrade to keep generating."
+      }, status: :unprocessable_entity
     end
 
     def build_article_attrs

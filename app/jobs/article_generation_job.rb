@@ -15,10 +15,19 @@ class ArticleGenerationJob < ApplicationJob
       word_limit: word_limit
     )
 
-    title   = extract_title(content) || "Untitled Article"
-    content = strip_leading_h1(content)
-
+    title      = extract_title(content) || "Untitled Article"
+    content    = strip_leading_h1(content)
     word_count = content.gsub(/<[^>]+>/, " ").split.length
+
+    # For free users, if the generated article exceeds their remaining words,
+    # fail the article instead of saving a partial result.
+    if article.user&.free?
+      remaining = article.user.words_remaining.to_i
+      if word_count > remaining
+        article.update!(status: :failed, content: Article::WORD_LIMIT_ERROR_MARKER)
+        return
+      end
+    end
 
     article.update!(
       content: content,

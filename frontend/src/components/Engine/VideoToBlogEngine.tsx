@@ -28,6 +28,7 @@ export function VideoToBlogEngine({
   onUpgrade,
 }: VideoToBlogEngineProps) {
   const isOverLimit = typeof wordsRemaining === "number" && wordsRemaining <= 0;
+  const isLowOnWords = typeof wordsRemaining === "number" && wordsRemaining > 0 && wordsRemaining < 300;
   const [url, setUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,14 +100,18 @@ export function VideoToBlogEngine({
 
   return (
     <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-2xl w-full">
-      {isOverLimit && (
+      {(isOverLimit || isLowOnWords) && (
         <div className="mb-5 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
           <span className="mt-0.5 text-amber-400">⚠</span>
           <div className="flex-1 text-sm">
-            <p className="font-medium text-amber-400">Monthly word limit reached</p>
+            <p className="font-medium text-amber-400">
+              {isOverLimit ? "Monthly word limit reached" : "Running low on words"}
+            </p>
             <p className="text-amber-400/70 mt-0.5">
-              You've used all 2,000 free words this month. Upgrade your plan to keep generating
-              articles.
+              {isOverLimit
+                ? "You've used all 2,000 free words this month."
+                : `Only ${wordsRemaining} words remaining — long videos may not generate fully.`}{" "}
+              Upgrade your plan to keep generating articles.
             </p>
           </div>
           {onUpgrade && (

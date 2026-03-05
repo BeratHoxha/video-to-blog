@@ -41,11 +41,13 @@ export function DashboardPage() {
         });
       }
     },
-    onError: () => {
+    onError: (err) => {
       setIsGenerating(false);
       setPendingArticleId(null);
       setGenerationError(
-        "Generation failed. The video may be unavailable or its audio couldn't be processed. Please try a different video."
+        err === "word_limit_reached"
+          ? "Word limit reached — the generated article exceeded your remaining words for this month. Upgrade your plan to continue."
+          : "Generation failed. The video may be unavailable or its audio couldn't be processed. Please try a different video."
       );
     },
   });
