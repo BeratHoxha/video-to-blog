@@ -5,6 +5,7 @@ import { App } from "./App";
 import { LandingPage } from "./pages/LandingPage";
 import { AuthPage } from "./pages/AuthPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
+import { CheckEmailPage } from "./pages/CheckEmailPage";
 
 const env = (window as any).__RAILS_ENV__ ?? {};
 const currentUser = env.currentUser ?? null;
@@ -36,6 +37,16 @@ if (onboardingRoot) {
   ReactDOM.createRoot(onboardingRoot).render(
     <React.StrictMode>
       <OnboardingPage csrfToken={csrfToken} />
+    </React.StrictMode>
+  );
+}
+
+// Check email page (shown after sign-up, before confirmation)
+const checkEmailRoot = document.getElementById("check-email-root");
+if (checkEmailRoot) {
+  ReactDOM.createRoot(checkEmailRoot).render(
+    <React.StrictMode>
+      <CheckEmailPage />
     </React.StrictMode>
   );
 }

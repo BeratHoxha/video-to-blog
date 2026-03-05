@@ -50,10 +50,14 @@ module Users
     end
 
     def render_invalid_credentials
-      message = I18n.t(
-        "devise.failure.invalid",
-        authentication_keys: resource_class.human_attribute_name(:email).downcase
-      )
+      message = if warden.message == :unconfirmed
+                  I18n.t("devise.failure.unconfirmed")
+                else
+                  I18n.t(
+                    "devise.failure.invalid",
+                    authentication_keys: resource_class.human_attribute_name(:email).downcase
+                  )
+                end
 
       respond_to do |format|
         format.html do

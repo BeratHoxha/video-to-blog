@@ -72,7 +72,7 @@ export function AuthPage({ mode, errors, csrfToken }: AuthPageProps) {
         password: responseErrors.password ?? [],
         password_confirmation: responseErrors.password_confirmation ?? [],
       };
-      const nextFormErrors = responseErrors.base ?? [data.error ?? "Authentication failed."];
+      const nextFormErrors = responseErrors.base ?? (data.error ? [data.error] : []);
 
       setFieldErrors(nextFieldErrors);
       setFormErrors(nextFormErrors);
