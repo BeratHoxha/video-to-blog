@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { UrlInput } from "./UrlInput";
+import { FileDropZone } from "./FileDropZone";
 import { OptionsPanel } from "./OptionsPanel";
 import { Loader2 } from "lucide-react";
+
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
 
 interface VideoToBlogEngineProps {
   authenticated: boolean;
@@ -19,6 +22,8 @@ interface FormState {
   additionalInstructions: string;
 }
 
+type InputMode = "url" | "file";
+
 export function VideoToBlogEngine({
   authenticated,
   userTier: _userTier,
@@ -29,7 +34,9 @@ export function VideoToBlogEngine({
 }: VideoToBlogEngineProps) {
   const isOverLimit = typeof wordsRemaining === "number" && wordsRemaining <= 0;
   const isLowOnWords = typeof wordsRemaining === "number" && wordsRemaining > 0 && wordsRemaining < 300;
+  const [inputMode, setInputMode] = useState<InputMode>("url");
   const [url, setUrl] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,6 +49,16 @@ export function VideoToBlogEngine({
 
   const handleOptionChange = (field: string, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleModeSwitch = (mode: InputMode) => {
+    setInputMode(mode);
+    setError(null);
+    if (mode === "url") {
+      setSelectedFile(null);
+    } else {
+      setUrl("");
+    }
   };
 
   const getCsrfToken = () => {
@@ -58,16 +75,33 @@ export function VideoToBlogEngine({
       return;
     }
 
-    if (!url.trim()) {
-      setError("Please paste a YouTube URL to get started.");
-      return;
+    if (inputMode === "url") {
+      if (!url.trim()) {
+        setError("Please paste a YouTube URL to get started.");
+        return;
+      }
+    } else {
+      if (!selectedFile) {
+        setError("Please select a video or audio file to upload.");
+        return;
+      }
+      if (selectedFile.size > MAX_FILE_SIZE) {
+        setError("File must be under 500 MB.");
+        return;
+      }
     }
 
     setIsSubmitting(true);
 
     try {
       const formData = new FormData();
-      formData.append("source_url", url);
+
+      if (inputMode === "url") {
+        formData.append("source_url", url);
+      } else {
+        formData.append("source_file", selectedFile!);
+      }
+
       formData.append("output_type", form.outputType);
       formData.append("output_format", form.outputFormat);
       formData.append("use_external_links", String(form.useExternalLinks));
@@ -126,8 +160,46 @@ export function VideoToBlogEngine({
         </div>
       )}
 
+      <div className="flex rounded-lg bg-gray-800 p-1 mb-5">
+        <button
+          type="button"
+          onClick={() => handleModeSwitch("url")}
+          className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            inputMode === "url"
+              ? "bg-gray-700 text-white"
+              : "text-gray-400 hover:text-gray-300"
+          }`}
+        >
+          YouTube URL
+        </button>
+        <button
+          type="button"
+          onClick={() => handleModeSwitch("file")}
+          className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            inputMode === "file"
+              ? "bg-gray-700 text-white"
+              : "text-gray-400 hover:text-gray-300"
+          }`}
+        >
+          Upload Video
+        </button>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-5">
-        <UrlInput value={url} onChange={setUrl} />
+        {inputMode === "url" ? (
+          <UrlInput value={url} onChange={setUrl} />
+        ) : (
+          <div className="space-y-2">
+            <FileDropZone
+              onFileSelect={setSelectedFile}
+              selectedFile={selectedFile}
+              maxSize={MAX_FILE_SIZE}
+            />
+            <p className="text-xs text-gray-500 text-center">
+              Your file is processed server-side — large files may take longer
+            </p>
+          </div>
+        )}
 
         <OptionsPanel {...form} authenticated={authenticated} onChange={handleOptionChange} />
 

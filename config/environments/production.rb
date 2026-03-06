@@ -63,9 +63,23 @@ Rails.application.configure do
   # config.active_job.queue_name_prefix = "video_to_blog_production"
 
   config.action_mailer.perform_caching = false
+  config.action_mailer.default_url_options = {
+    host: ENV.fetch("APP_HOST", "yourdomain.com"),
+    protocol: "https"
+  }
+  config.action_mailer.delivery_method = :smtp
+  smtp_port = ENV.fetch("SMTP_PORT", 587).to_i
+  config.action_mailer.smtp_settings = {
+    address: ENV["SMTP_HOST"],
+    port: smtp_port,
+    user_name: ENV["SMTP_USERNAME"],
+    password: ENV["SMTP_PASSWORD"],
+    authentication: :plain,
+    ssl: smtp_port == 465,
+    enable_starttls_auto: smtp_port == 587
+  }
 
   # Ignore bad email addresses and do not raise email delivery errors.
-  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
