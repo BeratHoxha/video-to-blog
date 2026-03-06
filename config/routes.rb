@@ -4,8 +4,14 @@ Rails.application.routes.draw do
   devise_for :users, controllers: {
     omniauth_callbacks: "users/omniauth_callbacks",
     registrations: "users/registrations",
-    sessions: "users/sessions"
+    sessions: "users/sessions",
+    confirmations: "users/confirmations"
   }
+
+  devise_scope :user do
+    get "/users/check-email", to: "users/confirmations#check_email",
+                              as: :users_check_email
+  end
 
   get "/dashboard", to: "dashboard#index"
   get "/dashboard/articles", to: "dashboard#index"

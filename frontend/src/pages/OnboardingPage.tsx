@@ -24,10 +24,8 @@ export function OnboardingPage({ csrfToken }: OnboardingPageProps) {
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4 py-12">
       {/* Logo */}
-      <a href="/" className="mb-10 flex items-center gap-1 font-bold text-lg tracking-tight">
-        <span className="text-white">Video</span>
-        <span className="text-emerald-500">·</span>
-        <span className="text-white">Blog</span>
+      <a href="/" className="mb-10">
+        <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
       </a>
 
       <div className="w-full max-w-lg">

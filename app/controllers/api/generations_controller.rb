@@ -6,15 +6,31 @@ module Api
       validate_source_params!
       return if performed?
 
+      validate_source_file!
+      return if performed?
+
       check_word_limit!
       return if performed?
 
       article = Article.create!(build_article_attrs)
+
+      if params[:source_file].present?
+        article.source_file.attach(
+          io: params[:source_file],
+          filename: params[:source_file].original_filename,
+          content_type: params[:source_file].content_type
+        )
+      end
+
       enqueue_generation!(article, current_user&.plan || "guest")
 
       render json: { article_id: article.id, status: "processing" }, status: :created
     rescue ActiveRecord::RecordInvalid => e
       render json: { error: e.record.errors.full_messages.to_sentence },
+             status: :unprocessable_entity
+    rescue => e
+      article&.destroy
+      render json: { error: "Failed to process file: #{e.message}" },
              status: :unprocessable_entity
     end
 
@@ -26,15 +42,31 @@ module Api
       render json: { error: "Provide a video URL or file" }, status: :unprocessable_entity
     end
 
+    def validate_source_file!
+      file = params[:source_file]
+      return unless file.present?
+
+      unless file.content_type.to_s.start_with?("video/", "audio/")
+        render json: { error: "File must be a video or audio file" },
+               status: :unprocessable_entity
+        return
+      end
+
+      if file.size > 500.megabytes
+        render json: { error: "File must be under 500 MB" }, status: :unprocessable_entity
+      end
+    end
+
     def check_word_limit!
       return unless current_user&.free?
 
       current_user.reset_words_if_needed!
       return if current_user.words_remaining.positive?
 
-      msg = "You've used all 2,000 words in your free plan this month. " \
-            "Upgrade to keep generating."
-      render json: { error: msg }, status: :unprocessable_entity
+      render json: {
+        error: "You've used all 2,000 words in your free plan this month. " \
+               "Upgrade to keep generating."
+      }, status: :unprocessable_entity
     end
 
     def build_article_attrs

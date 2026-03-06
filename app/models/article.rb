@@ -1,5 +1,8 @@
 class Article < ApplicationRecord
+  WORD_LIMIT_ERROR_MARKER = "WORD_LIMIT_ERROR"
+
   belongs_to :user, optional: true
+  has_one_attached :source_file
 
   enum :status, { processing: 0, complete: 1, failed: 2 }
   enum :source_type, { url: 0, file: 1 }
@@ -42,6 +45,7 @@ class Article < ApplicationRecord
 
   def as_status_json
     base = { id: id, status: status, title: title }
+    base[:word_limit_error] = true if failed? && content == WORD_LIMIT_ERROR_MARKER
     return base unless complete?
 
     base.merge(content: content, word_count: word_count, output_format: output_format)
