@@ -28,10 +28,8 @@ export function Nav({ authenticated }: NavProps) {
     >
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-1 font-bold text-lg tracking-tight">
-          <span className="text-white">Video</span>
-          <span className="text-emerald-500">·</span>
-          <span className="text-white">Blog</span>
+        <a href="/">
+          <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
         </a>
 
         {/* Desktop nav */}

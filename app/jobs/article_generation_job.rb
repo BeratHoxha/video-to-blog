@@ -15,10 +15,19 @@ class ArticleGenerationJob < ApplicationJob
       word_limit: word_limit
     )
 
-    title   = extract_title(content) || "Untitled Article"
-    content = strip_leading_h1(content)
-
+    title      = extract_title(content) || "Untitled Article"
+    content    = strip_leading_h1(content)
     word_count = content.gsub(/<[^>]+>/, " ").split.length
+
+    # For free users, if the generated article exceeds their remaining words,
+    # fail the article instead of saving a partial result.
+    if article.user&.free?
+      remaining = article.user.words_remaining.to_i
+      if word_count > remaining
+        article.update!(status: :failed, content: Article::WORD_LIMIT_ERROR_MARKER)
+        return
+      end
+    end
 
     article.update!(
       content: content,
@@ -27,11 +36,14 @@ class ArticleGenerationJob < ApplicationJob
       status: :complete
     )
 
+    article.source_file.purge_later if article.source_file.attached?
+
     increment_user_word_usage(article, word_count)
   rescue TranscriptionService::TranscriptionError,
          ArticleGenerationService::GenerationError,
          StandardError => e
     Rails.logger.error "ArticleGenerationJob failed for ##{article_id}: #{e.message}"
+    article&.source_file&.purge_later if article&.source_file&.attached?
     article&.update!(status: :failed)
     raise
   end
@@ -39,8 +51,10 @@ class ArticleGenerationJob < ApplicationJob
   private
 
   def fetch_transcript(article, trim_seconds: nil)
-    if article.file?
-      TranscriptionService.call(file_path: article.source_file_path, trim_seconds: trim_seconds)
+    if article.file? && article.source_file.attached?
+      article.source_file.open do |tempfile|
+        TranscriptionService.call(file_path: tempfile.path, trim_seconds: trim_seconds)
+      end
     else
       TranscriptionService.call(source_url: article.source_url, trim_seconds: trim_seconds)
     end

@@ -51,10 +51,8 @@ export function Sidebar({ user }: SidebarProps) {
     <aside className="w-60 shrink-0 flex flex-col h-screen border-r border-gray-800 bg-gray-900">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-gray-800">
-        <a href="/" className="flex items-center gap-1 font-bold text-lg tracking-tight">
-          <span className="text-white">Video</span>
-          <span className="text-emerald-500">·</span>
-          <span className="text-white">Blog</span>
+        <a href="/">
+          <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
         </a>
       </div>
 

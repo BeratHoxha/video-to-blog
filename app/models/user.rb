@@ -1,7 +1,7 @@
 class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable,
-         :omniauthable, omniauth_providers: %i[google_oauth2 github]
+         :confirmable, :omniauthable, omniauth_providers: %i[google_oauth2 github]
 
   enum :plan, { free: 0, basic: 1, premium: 2 }
 
@@ -17,6 +17,7 @@ class User < ApplicationRecord
       user.name = auth.info.name
       user.provider = auth.provider
       user.uid = auth.uid
+      user.skip_confirmation! # OAuth identity is already verified
     end
   end
 

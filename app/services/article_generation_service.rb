@@ -132,9 +132,7 @@ class ArticleGenerationService
     words = content.split
     return content if words.length <= @word_limit
 
-    # Truncate at word boundary, keeping valid HTML structure
     truncated = words.first(@word_limit).join(" ")
-    # Close any open tags naively
     truncated + close_open_tags(truncated)
   end
 

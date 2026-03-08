@@ -7,6 +7,7 @@ interface GenerationStatus {
   content?: string;
   word_count?: number;
   output_format?: string;
+  word_limit_error?: boolean;
 }
 
 interface UseGenerationPollerOptions {
@@ -49,7 +50,7 @@ export function useGenerationPoller({
         onComplete?.(data);
       } else if (data.status === "failed") {
         stopPolling();
-        onError?.("Article generation failed. Please try again.");
+        onError?.(data.word_limit_error ? "word_limit_reached" : "generation_failed");
       }
     } catch (err) {
       stopPolling();
