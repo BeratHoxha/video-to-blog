@@ -7,7 +7,11 @@ import { AuthPage } from "./pages/AuthPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { CheckEmailPage } from "./pages/CheckEmailPage";
 
-const env = (window as any).__RAILS_ENV__ ?? {};
+interface RailsEnv {
+  currentUser?: unknown;
+  csrfToken?: string;
+}
+const env = (window as Window & { __RAILS_ENV__?: RailsEnv }).__RAILS_ENV__ ?? {};
 const currentUser = env.currentUser ?? null;
 const csrfToken = env.csrfToken ?? "";
 

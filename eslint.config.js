@@ -40,6 +40,8 @@ export default tseslint.config(
       ...Object.fromEntries(
         Object.entries(jsxA11y.configs.recommended.rules ?? {}).map(([k, _]) => [k, "warn"])
       ),
+      // Accept htmlFor+id OR nesting — not both required
+      "jsx-a11y/label-has-for": ["warn", { required: { some: ["nesting", "id"] } }],
     },
   },
   prettierConfig

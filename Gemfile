@@ -14,6 +14,10 @@ gem "tzinfo-data", platforms: %i[mingw mswin x64_mingw jruby]
 # Frontend (Vite + React)
 gem "vite_rails"
 
+# Billing
+gem "pay", "~> 7.0"
+gem "paddle", "~> 2.1"
+
 # Auth
 gem "devise"
 gem "omniauth"

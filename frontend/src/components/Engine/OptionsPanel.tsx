@@ -22,8 +22,11 @@ export function OptionsPanel({
     <div className="space-y-5">
       {/* Output Type */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1.5">Output Type</label>
+        <label htmlFor="output-type" className="block text-sm font-medium text-gray-300 mb-1.5">
+          Output Type
+        </label>
         <select
+          id="output-type"
           value={outputType}
           onChange={(e) => onChange("outputType", e.target.value)}
           className="w-full bg-gray-800 border border-gray-700 rounded-lg
@@ -41,7 +44,7 @@ export function OptionsPanel({
 
       {/* Output Format */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1.5">
+        <label htmlFor="output-format" className="block text-sm font-medium text-gray-300 mb-1.5">
           Output Format
           {!authenticated && (
             <span className="ml-2 inline-flex items-center gap-1 text-xs text-gray-500">
@@ -80,10 +83,15 @@ export function OptionsPanel({
 
       {/* Additional Instructions */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1.5">
+        <label
+          htmlFor="additional-instructions"
+          className="block text-sm font-medium text-gray-300 mb-1.5"
+        >
           Additional Instructions <span className="text-gray-600 font-normal">(optional)</span>
         </label>
         <textarea
+          id="additional-instructions"
+          aria-label="Additional instructions"
           value={additionalInstructions}
           onChange={(e) => onChange("additionalInstructions", e.target.value)}
           placeholder="e.g. Focus on technical depth, include code examples..."
@@ -111,7 +119,11 @@ function Toggle({
     <div
       role="switch"
       aria-checked={checked}
+      tabIndex={0}
       onClick={() => onChange(!checked)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onChange(!checked);
+      }}
       className="flex items-center justify-between bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 cursor-pointer select-none"
     >
       <span className="text-sm text-gray-300">{label}</span>

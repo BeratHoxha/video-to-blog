@@ -11,6 +11,11 @@
     <%= vite_react_refresh_tag %>
     <%= vite_javascript_tag 'main.tsx' %>
 
+    <%# Paddle.js — loaded from the appropriate CDN based on environment %>
+    <% paddle_env = ENV.fetch("PADDLE_BILLING_ENVIRONMENT", "sandbox") %>
+    <% paddle_cdn = paddle_env == "production" ? "https://cdn.paddle.com/paddle/v2/paddle.js" : "https://sandbox-cdn.paddle.com/paddle/v2/paddle.js" %>
+    <script src="<%= paddle_cdn %>" defer></script>
+
     <script>
       window.__RAILS_ENV__ = {
         currentUser: <%= raw(current_user_json.to_json) %>,

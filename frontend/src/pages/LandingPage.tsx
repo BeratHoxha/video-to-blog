@@ -20,7 +20,7 @@ export function LandingPage({ authenticated }: LandingPageProps) {
     if (authenticated) {
       window.location.replace("/dashboard");
     }
-  }, []);
+  }, [authenticated]);
 
   return (
     <div className="min-h-screen bg-gray-950">

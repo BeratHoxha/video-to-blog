@@ -85,6 +85,7 @@ export function AIBotPanel({ selectedText, onApply, callsRemaining }: AIBotPanel
         <div>
           <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Custom instruction</p>
           <textarea
+            aria-label="Custom instruction"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder={hasSelection ? "What should I change?" : "Select text first..."}
