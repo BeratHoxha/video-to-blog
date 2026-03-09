@@ -3,9 +3,19 @@ class User < ApplicationRecord
          :recoverable, :rememberable, :validatable,
          :confirmable, :omniauthable, omniauth_providers: %i[google_oauth2 github]
 
+  pay_customer
+
   enum :plan, { free: 0, basic: 1, premium: 2 }
+  enum :plan_status, {
+    inactive: 0,
+    trialing: 1,
+    active: 2,
+    past_due: 3,
+    canceled: 4
+  }
 
   has_many :articles, dependent: :destroy
+  has_many :payment_transactions, dependent: :destroy
 
   AI_BOT_WEEKLY_LIMIT = 10
   FREE_WORD_LIMIT = 2000
@@ -22,29 +32,30 @@ class User < ApplicationRecord
   end
 
   def ai_bot_calls_remaining
-    return nil unless free?
+    limit = Billing::EntitlementManager.new(self).ai_bot_limit
+    return nil if limit.nil?
 
     reset_ai_bot_calls_if_needed!
-    AI_BOT_WEEKLY_LIMIT - ai_bot_calls_this_week
+    limit - ai_bot_calls_this_week
   end
 
   def ai_bot_limit_reached?
-    return false unless free?
+    limit = Billing::EntitlementManager.new(self).ai_bot_limit
+    return false if limit.nil?
 
     ai_bot_calls_remaining <= 0
   end
 
   def words_remaining
-    return nil if basic? || premium?
+    limit = Billing::EntitlementManager.new(self).word_count_limit
+    return nil if limit.nil?
 
     reset_words_if_needed!
-    FREE_WORD_LIMIT - words_used_this_month
+    limit - words_used_this_month
   end
 
   def word_limit
-    return nil if basic? || premium?
-
-    FREE_WORD_LIMIT
+    Billing::EntitlementManager.new(self).word_count_limit
   end
 
   def increment_ai_bot_calls!
@@ -77,6 +88,8 @@ class User < ApplicationRecord
       name: name,
       email: email,
       plan: plan,
+      plan_status: plan_status,
+      plan_expires_at: plan_expires_at,
       provider: provider,
       words_remaining: words_remaining,
       words_used_this_month: words_used_this_month,

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 interface GenerationStatus {
   id: number;
@@ -27,15 +27,15 @@ export function useGenerationPoller({
   const [isPolling, setIsPolling] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const stopPolling = () => {
+  const stopPolling = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
     setIsPolling(false);
-  };
+  }, []);
 
-  const poll = async () => {
+  const poll = useCallback(async () => {
     if (!articleId) return;
 
     try {
@@ -56,7 +56,7 @@ export function useGenerationPoller({
       stopPolling();
       onError?.(err instanceof Error ? err.message : "Polling error");
     }
-  };
+  }, [articleId, onComplete, onError, stopPolling]);
 
   useEffect(() => {
     if (!articleId) return;
@@ -68,7 +68,7 @@ export function useGenerationPoller({
     intervalRef.current = setInterval(poll, intervalMs);
 
     return stopPolling;
-  }, [articleId]);
+  }, [articleId, intervalMs, poll, stopPolling]);
 
   return { status, isPolling };
 }

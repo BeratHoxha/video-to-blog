@@ -20,7 +20,9 @@ export function FileDropZone({
   const handleFile = useCallback(
     (file: File) => {
       if (file.size > maxSize) {
-        setSizeError(`File is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is ${(maxSize / 1024 / 1024).toFixed(0)} MB.`);
+        setSizeError(
+          `File is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is ${(maxSize / 1024 / 1024).toFixed(0)} MB.`
+        );
         onFileSelect(null);
         return;
       }
@@ -47,7 +49,9 @@ export function FileDropZone({
 
   return (
     <div className="space-y-2">
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
       <label
+        htmlFor="file-drop-input"
         onDragOver={(e) => {
           e.preventDefault();
           setIsDragging(true);
@@ -61,22 +65,32 @@ export function FileDropZone({
                       isDragging
                         ? "border-emerald-500 bg-emerald-500/10"
                         : sizeError
-                        ? "border-red-500/60 bg-red-500/5"
-                        : "border-gray-700 hover:border-gray-600 hover:bg-gray-800/50"
+                          ? "border-red-500/60 bg-red-500/5"
+                          : "border-gray-700 hover:border-gray-600 hover:bg-gray-800/50"
                     }`}
       >
-        <input type="file" accept="video/*,audio/*" className="sr-only" onChange={handleChange} />
+        <input
+          id="file-drop-input"
+          type="file"
+          aria-label="Upload video or audio file"
+          accept="video/*,audio/*"
+          className="sr-only"
+          onChange={handleChange}
+        />
         {selectedFile ? (
           <>
             <FileVideo size={24} className="text-emerald-500" />
             <p className="text-sm text-gray-300 font-medium">{selectedFile.name}</p>
-            <p className="text-xs text-gray-600">{(selectedFile.size / 1024 / 1024).toFixed(1)} MB</p>
+            <p className="text-xs text-gray-600">
+              {(selectedFile.size / 1024 / 1024).toFixed(1)} MB
+            </p>
           </>
         ) : (
           <>
             <Upload size={24} className={sizeError ? "text-red-400" : "text-gray-500"} />
             <p className="text-sm text-gray-400">
-              Drop a video file here, or <span className="text-emerald-500 font-medium">browse</span>
+              Drop a video file here, or{" "}
+              <span className="text-emerald-500 font-medium">browse</span>
             </p>
             <p className="text-xs text-gray-600">MP4, MOV, MP3, WAV — up to 500MB</p>
           </>

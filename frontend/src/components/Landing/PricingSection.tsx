@@ -8,6 +8,7 @@ const PLANS = [
     description: "Try it out. No credit card required.",
     cta: "Get started free",
     ctaHref: "/users/sign_up",
+    planKey: null,
     featured: false,
     features: [
       "Up to 2,000 words per article",
@@ -24,6 +25,7 @@ const PLANS = [
     description: "For creators who publish regularly.",
     cta: "Start with Basic",
     ctaHref: "/users/sign_up",
+    planKey: "basic_monthly",
     featured: true,
     features: [
       "Unlimited word count",
@@ -41,6 +43,7 @@ const PLANS = [
     description: "For teams and power users.",
     cta: "Go Premium",
     ctaHref: "/users/sign_up",
+    planKey: "premium_monthly",
     featured: false,
     features: [
       "Everything in Basic",
@@ -52,7 +55,48 @@ const PLANS = [
   },
 ];
 
-export function PricingSection() {
+interface PricingSectionProps {
+  /** CSRF token — passed when the user is authenticated. */
+  csrfToken?: string;
+  /** Current user ID — used in Paddle customData for reconciliation. */
+  userId?: number;
+}
+
+export function PricingSection({ csrfToken, userId }: PricingSectionProps = {}) {
+  async function handlePlanClick(planKey: string) {
+    if (!csrfToken) {
+      // Not signed in — redirect to sign up
+      window.location.href = "/users/sign_up";
+      return;
+    }
+
+    try {
+      const res = await fetch("/billing/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+        },
+        body: JSON.stringify({ plan: planKey }),
+      });
+
+      if (!res.ok) return;
+
+      const { client_token, customer_id, price_id } = await res.json();
+
+      if (!window.Paddle) return;
+
+      window.Paddle.Initialize({ token: client_token });
+      window.Paddle.Checkout.open({
+        items: [{ priceId: price_id, quantity: 1 }],
+        customer: { id: customer_id },
+        customData: { user_id: userId, plan_key: planKey },
+      });
+    } catch {
+      // Silently fall back — user can try from the billing settings page
+    }
+  }
+
   return (
     <section id="pricing" className="py-24 px-4 bg-gray-900/50">
       <div className="max-w-6xl mx-auto">
@@ -101,18 +145,29 @@ export function PricingSection() {
                 ))}
               </ul>
 
-              <a
-                href={plan.ctaHref}
-                className={`block text-center py-2.5 rounded-lg text-sm font-semibold
-                            transition-colors
-                  ${
-                    plan.featured
-                      ? "bg-emerald-500 hover:bg-emerald-400 text-white"
-                      : "border border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white"
-                  }`}
-              >
-                {plan.cta}
-              </a>
+              {plan.planKey ? (
+                <button
+                  onClick={() => handlePlanClick(plan.planKey!)}
+                  className={`block w-full text-center py-2.5 rounded-lg text-sm font-semibold
+                              transition-colors
+                    ${
+                      plan.featured
+                        ? "bg-emerald-500 hover:bg-emerald-400 text-white"
+                        : "border border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white"
+                    }`}
+                >
+                  {plan.cta}
+                </button>
+              ) : (
+                <a
+                  href={plan.ctaHref}
+                  className="block text-center py-2.5 rounded-lg text-sm font-semibold
+                             border border-gray-700 hover:border-gray-600 text-gray-300
+                             hover:text-white transition-colors"
+                >
+                  {plan.cta}
+                </a>
+              )}
             </div>
           ))}
         </div>

@@ -21,16 +21,5 @@ module Api
                status: :unprocessable_entity
       end
     end
-
-    # PATCH /api/users/plan — switch plan
-    def update_plan
-      plan = params[:plan].to_s
-      unless %w[free basic premium].include?(plan)
-        return render json: { error: "Invalid plan" }, status: :unprocessable_entity
-      end
-
-      current_user.update!(plan: plan)
-      render json: current_user.as_api_json
-    end
   end
 end

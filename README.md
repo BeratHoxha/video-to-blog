@@ -169,6 +169,67 @@ bundle exec rspec spec/requests/
 
 ---
 
+## Testing Paddle Billing Locally
+
+Paddle webhooks require a publicly accessible URL. Use [ngrok](https://ngrok.com) to tunnel your local server.
+
+### 1. Install ngrok
+
+```bash
+brew install ngrok
+ngrok config add-authtoken <your-ngrok-token>
+```
+
+### 2. Start a tunnel
+
+```bash
+ngrok http 3000
+```
+
+Copy the HTTPS forwarding URL shown (e.g. `https://claudine-trailless-domingo.ngrok-free.dev`).
+
+### 3. Configure Paddle sandbox
+
+In the [Paddle sandbox dashboard](https://sandbox-vendors.paddle.com):
+
+1. **Notification destination** — go to **Developer Tools → Notifications → New destination** and set the URL to:
+   ```
+   https://<your-ngrok-subdomain>.ngrok-free.dev/pay/webhooks/paddle_billing
+   ```
+   Copy the **Secret key** shown and set it in your `.env`:
+   ```env
+   PADDLE_BILLING_SIGNING_SECRET=pdl_ntfset_...
+   ```
+
+2. **Products** — go to **Catalog → Products** and create two products:
+   - **Video to Blog Basic** → price: $12.00, recurring monthly
+   - **Video to Blog Premium** → price: $29.00, recurring monthly
+
+   Copy each **Price ID** (`pri_...`) and set them in `.env`:
+   ```env
+   PADDLE_PRICE_BASIC_MONTHLY=pri_...
+   PADDLE_PRICE_PREMIUM_MONTHLY=pri_...
+   ```
+
+3. **Client token & API key** — go to **Developer Tools → Authentication**:
+   ```env
+   PADDLE_BILLING_CLIENT_TOKEN=test_...
+   PADDLE_BILLING_API_KEY=pdl_sdbx_...
+   PADDLE_BILLING_ENVIRONMENT=sandbox
+   ```
+
+4. **Default payment link** — set to `http://localhost:3000/dashboard` (used as a fallback; not required for overlay checkout).
+
+### 4. Restart Rails
+
+```bash
+bin/rails server
+```
+
+Paddle webhooks will now reach your local app through the ngrok tunnel.
+
+---
+
 ## Notes
 
 - YouTube transcription uses the free YouTube timedtext API — no API key needed

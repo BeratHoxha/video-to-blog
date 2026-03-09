@@ -11,6 +11,11 @@ export function useTypewriter({ text, charDelayMs = 12, onComplete }: UseTypewri
   const [isComplete, setIsComplete] = useState(false);
   const indexRef = useRef(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onCompleteRef = useRef(onComplete);
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     if (!text) return;
@@ -23,7 +28,7 @@ export function useTypewriter({ text, charDelayMs = 12, onComplete }: UseTypewri
       if (indexRef.current >= text.length) {
         clearInterval(intervalRef.current!);
         setIsComplete(true);
-        onComplete?.();
+        onCompleteRef.current?.();
         return;
       }
 
@@ -37,7 +42,7 @@ export function useTypewriter({ text, charDelayMs = 12, onComplete }: UseTypewri
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [text]);
+  }, [text, charDelayMs]);
 
   return { displayed, isComplete };
 }

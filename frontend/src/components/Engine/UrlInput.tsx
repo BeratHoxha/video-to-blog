@@ -13,6 +13,7 @@ export function UrlInput({ value, onChange }: UrlInputProps) {
       </div>
       <input
         type="url"
+        aria-label="Video or audio URL"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="https://youtube.com/watch?v=..."

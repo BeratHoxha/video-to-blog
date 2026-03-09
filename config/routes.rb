@@ -1,6 +1,17 @@
 Rails.application.routes.draw do
   root "pages#home"
 
+  # Billing (Paddle Checkout + subscription lifecycle)
+  post "/billing/checkout",     to: "billing#checkout"
+  post "/billing/change_plan",  to: "billing#change_plan"
+  post "/billing/cancel",       to: "billing#cancel"
+
+  # Settings API
+  namespace :settings do
+    get "/billing", to: "billing#show"
+  end
+  # Note: Pay::Engine is auto-mounted at /pay by pay gem (Pay.automount_routes = true)
+
   devise_for :users, controllers: {
     omniauth_callbacks: "users/omniauth_callbacks",
     registrations: "users/registrations",
@@ -17,6 +28,7 @@ Rails.application.routes.draw do
   get "/dashboard/articles", to: "dashboard#index"
   get "/dashboard/articles/:id", to: "dashboard#index"
   get "/dashboard/profile", to: "dashboard#index"
+  get "/dashboard/billing", to: "dashboard#index"
   get "/onboarding", to: "onboarding#index"
   post "/onboarding", to: "onboarding#complete"
 
@@ -31,7 +43,6 @@ Rails.application.routes.draw do
     post "/images/upload", to: "images#upload"
     post "/ai_bot", to: "ai_bot#rewrite"
     post "/newsletter", to: "newsletter#subscribe"
-    patch "/users/me",   to: "users#update_profile"
-    patch "/users/plan", to: "users#update_plan"
+    patch "/users/me", to: "users#update_profile"
   end
 end
