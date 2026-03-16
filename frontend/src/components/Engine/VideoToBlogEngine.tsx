@@ -15,7 +15,10 @@ interface VideoToBlogEngineProps {
   onUpgrade?: () => void;
 }
 
+type ContentMode = "article" | "summary";
+
 interface FormState {
+  contentMode: ContentMode;
   outputType: string;
   outputFormat: string;
   useExternalLinks: boolean;
@@ -41,6 +44,7 @@ export function VideoToBlogEngine({
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState<FormState>({
+    contentMode: "article",
     outputType: "Blog-Driven",
     outputFormat: "pdf",
     useExternalLinks: false,
@@ -102,6 +106,7 @@ export function VideoToBlogEngine({
         formData.append("source_file", selectedFile!);
       }
 
+      formData.append("content_mode", form.contentMode);
       formData.append("output_type", form.outputType);
       formData.append("output_format", form.outputFormat);
       formData.append("use_external_links", String(form.useExternalLinks));
@@ -201,7 +206,11 @@ export function VideoToBlogEngine({
           </div>
         )}
 
-        <OptionsPanel {...form} authenticated={authenticated} onChange={handleOptionChange} />
+        <OptionsPanel
+          {...form}
+          authenticated={authenticated}
+          onChange={handleOptionChange}
+        />
 
         {error && (
           <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
@@ -221,8 +230,10 @@ export function VideoToBlogEngine({
               <Loader2 size={16} className="animate-spin" />
               Generating...
             </>
+          ) : form.contentMode === "summary" ? (
+            "Summarise Video"
           ) : (
-            "Generate"
+            "Generate Article"
           )}
         </button>
       </form>
