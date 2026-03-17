@@ -110,6 +110,14 @@ export function Sidebar({ user }: SidebarProps) {
           </button>
         )}
 
+        {/* Terms link */}
+        <a
+          href="/terms"
+          className="block text-center text-xs text-gray-700 hover:text-gray-500 transition-colors"
+        >
+          Terms &amp; Privacy
+        </a>
+
         {/* User menu */}
         <div className="relative pt-2" ref={menuRef}>
           <button
