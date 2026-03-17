@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   root "pages#home"
+  get "/terms", to: "pages#terms"
 
   devise_for :users, controllers: {
     omniauth_callbacks: "users/omniauth_callbacks",
