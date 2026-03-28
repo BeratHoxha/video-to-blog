@@ -74,6 +74,7 @@ module Api
         user: current_user,
         source_url: params[:source_url],
         source_type: params[:source_file].present? ? :file : :url,
+        content_mode: params[:content_mode].presence || "article",
         output_type: params[:output_type],
         output_format: params[:output_format],
         include_images: cast_bool(params[:include_images]),
