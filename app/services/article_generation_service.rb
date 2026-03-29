@@ -50,7 +50,7 @@ class ArticleGenerationService
     # Fetch real external links before building the prompt so system_prompt
     # can embed them. Assigned to an ivar to avoid double-fetching.
     # External links are only used in article mode.
-    @external_links = (!summary? && @options[:use_external_links]) ? fetch_external_links : []
+    @external_links = !summary? && @options[:use_external_links] ? fetch_external_links : []
 
     # When a word limit is set, cap max_tokens so the model stops early
     # rather than generating a full article and truncating after.
@@ -207,7 +207,7 @@ class ArticleGenerationService
       max_tokens: 60
     )
 
-    queries = queries_text.split("\n").map(&:strip).reject(&:blank?).first(2)
+    queries = queries_text.split("\n").map(&:strip).compact_blank.first(2)
 
     results = queries.flat_map do |query|
       GoogleSearchService.search(query: query, num: 3)

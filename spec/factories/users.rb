@@ -3,17 +3,33 @@ FactoryBot.define do
     name { Faker::Name.name }
     email { Faker::Internet.unique.email }
     password { "password123" }
+    confirmed_at { Time.current }
     plan { :free }
+    plan_status { :inactive }
     words_used_this_month { 0 }
     ai_bot_calls_this_week { 0 }
     onboarding_completed { true }
 
     trait :basic do
       plan { :basic }
+      plan_status { :active }
     end
 
     trait :premium do
       plan { :premium }
+      plan_status { :active }
+    end
+
+    trait :active_subscription do
+      plan_status { :active }
+    end
+
+    trait :past_due do
+      plan_status { :past_due }
+    end
+
+    trait :canceled do
+      plan_status { :canceled }
     end
 
     trait :at_ai_bot_limit do

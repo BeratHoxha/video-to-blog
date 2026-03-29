@@ -17,6 +17,9 @@ class PptxBuilderService
   BORDER = "334155"
   FONT   = "Calibri"
 
+  BULLETS_PER_SLIDE = 4
+  BULLET_MAX_LEN    = 110
+
   def self.build(title:, blocks:)
     new(title, blocks).build
   end
@@ -28,20 +31,10 @@ class PptxBuilderService
 
   def build
     Zip::OutputStream.write_buffer do |z|
-      put z, "[Content_Types].xml",                             content_types_xml
-      put z, "_rels/.rels",                                     root_rels_xml
-      put z, "docProps/app.xml",                                app_xml
-      put z, "docProps/core.xml",                               core_xml
-      put z, "ppt/theme/theme1.xml",                            theme_xml
-      put z, "ppt/slideMasters/slideMaster1.xml",               slide_master_xml
-      put z, "ppt/slideMasters/_rels/slideMaster1.xml.rels",    slide_master_rels_xml
-      put z, "ppt/slideLayouts/slideLayout1.xml",               slide_layout_xml
-      put z, "ppt/slideLayouts/_rels/slideLayout1.xml.rels",    slide_layout_rels_xml
-      put z, "ppt/presentation.xml",                            presentation_xml
-      put z, "ppt/_rels/presentation.xml.rels",                 presentation_rels_xml
+      write_static_parts(z)
       @slides.each_with_index do |slide, i|
         n = i + 1
-        put z, "ppt/slides/slide#{n}.xml",        slide_xml(slide)
+        put z, "ppt/slides/slide#{n}.xml", slide_xml(slide)
         put z, "ppt/slides/_rels/slide#{n}.xml.rels", slide_rels_xml
       end
     end.string
@@ -58,14 +51,25 @@ class PptxBuilderService
 
   def xe(str)
     str.to_s
-      .gsub("&", "&amp;")
-      .gsub("<", "&lt;")
-      .gsub(">", "&gt;")
-      .gsub('"', "&quot;")
+       .gsub("&", "&amp;")
+       .gsub("<", "&lt;")
+       .gsub(">", "&gt;")
+       .gsub('"', "&quot;")
   end
 
-  BULLETS_PER_SLIDE = 4
-  BULLET_MAX_LEN    = 110
+  def write_static_parts(zip)
+    put zip, "[Content_Types].xml",                          content_types_xml
+    put zip, "_rels/.rels",                                  root_rels_xml
+    put zip, "docProps/app.xml",                             app_xml
+    put zip, "docProps/core.xml",                            core_xml
+    put zip, "ppt/theme/theme1.xml",                         theme_xml
+    put zip, "ppt/slideMasters/slideMaster1.xml",            slide_master_xml
+    put zip, "ppt/slideMasters/_rels/slideMaster1.xml.rels", slide_master_rels_xml
+    put zip, "ppt/slideLayouts/slideLayout1.xml",            slide_layout_xml
+    put zip, "ppt/slideLayouts/_rels/slideLayout1.xml.rels", slide_layout_rels_xml
+    put zip, "ppt/presentation.xml",                         presentation_xml
+    put zip, "ppt/_rels/presentation.xml.rels",              presentation_rels_xml
+  end
 
   def collect_slides(blocks)
     slides   = [{ kind: :title, title: @title }]
@@ -95,7 +99,7 @@ class PptxBuilderService
   def summarize_section(title, blocks)
     text_parts = blocks.map do |b|
       b[:segments].map { |s| s[:text] }.join.strip
-    end.reject(&:blank?)
+    end.compact_blank
 
     return [] if text_parts.empty?
 
@@ -135,7 +139,7 @@ class PptxBuilderService
     text.to_s
         .split("\n")
         .map { |line| line.gsub(/\A[\s\-•*\d.]+/, "").strip }
-        .reject(&:blank?)
+        .compact_blank
         .first(BULLETS_PER_SLIDE)
   end
 
@@ -146,7 +150,7 @@ class PptxBuilderService
   def clip(text, max: BULLET_MAX_LEN)
     return text if text.length <= max
 
-    text[0, max].rstrip.sub(/[.,;:\-\u2014]+$/, "") + "\u2026"
+    "#{text[0, max].rstrip.sub(/[.,;:\-\u2014]+$/, '')}…"
   end
 
   # ── Content Types ────────────────────────────────────────────────────────
@@ -431,9 +435,11 @@ class PptxBuilderService
 
   def slide_xml(slide)
     ns     = pml_ns
-    shapes = slide[:kind] == :title ?
-               title_slide_shapes(slide[:title]) :
+    shapes = if slide[:kind] == :title
+               title_slide_shapes(slide[:title])
+             else
                content_slide_shapes(slide[:title], slide[:bullets])
+             end
 
     <<~XML
       <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -670,7 +676,7 @@ class PptxBuilderService
 
   def pml_ns
     'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" ' \
-    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ' \
-    'xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"'
+      'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ' \
+      'xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"'
   end
 end

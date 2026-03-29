@@ -9,7 +9,7 @@ module Api
       file = params[:file]
 
       return render json: { error: "No file provided" }, status: :bad_request \
-        unless file.present?
+        if file.blank?
 
       unless file.content_type.to_s.start_with?("image/")
         return render json: { error: "File must be an image" }, status: :bad_request

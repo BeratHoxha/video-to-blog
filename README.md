@@ -14,6 +14,7 @@ Turn any video into a polished blog post. Paste a YouTube URL or upload a video 
 | Jobs | Sidekiq + Redis |
 | Storage | Active Storage + AWS S3 |
 | Auth | Devise + OmniAuth (Google, GitHub) |
+| Payments | Pay gem + Paddle Billing + Paddle.js overlay checkout |
 
 ---
 
@@ -79,6 +80,14 @@ GITHUB_CLIENT_SECRET=
 # Local services — defaults work out of the box
 DATABASE_URL=postgres://localhost/video_to_blog_development
 REDIS_URL=redis://localhost:6379/0
+
+# Paddle Billing — required for paid plans
+PADDLE_BILLING_ENVIRONMENT=sandbox
+PADDLE_BILLING_API_KEY=
+PADDLE_BILLING_CLIENT_TOKEN=
+PADDLE_BILLING_SIGNING_SECRET=
+PADDLE_PRICE_BASIC_MONTHLY=
+PADDLE_PRICE_PREMIUM_MONTHLY=
 ```
 
 ### 5. Start PostgreSQL and Redis
@@ -166,6 +175,150 @@ bundle exec rspec spec/requests/
 - **Export** — download as PDF, DOCX, or XLSX
 - **Article history** — all past articles listed in the dashboard sidebar
 - **Newsletter signup** — email capture on the landing page
+
+---
+
+## Payments
+
+The app uses Paddle Billing for subscriptions.
+
+### What we use
+
+- **Ruby gem:** `pay` (`7.3.0` locked in `Gemfile.lock`) for subscription/customer/webhook plumbing
+- **Ruby gem:** `paddle` (`2.9` locked in `Gemfile.lock`) for Paddle Billing support
+- **Frontend SDK:** hosted `Paddle.js` loaded from Paddle's CDN in the Rails layout
+- **Checkout mode:** Paddle overlay checkout opened from the React app
+- **Webhook endpoint:** `/pay/webhooks/paddle_billing` provided by `pay`
+
+There is no Paddle npm package in this project. The frontend uses the script tag loaded in `app/views/layouts/application.html.erb`.
+
+### App payment flow
+
+1. The frontend posts to `POST /billing/checkout`.
+2. Rails builds the checkout payload with `Billing::CheckoutSessionBuilder`.
+3. The frontend opens Paddle overlay checkout with the returned `client_token`, `environment`, and `price_id`.
+4. Paddle sends webhook events to `POST /pay/webhooks/paddle_billing`.
+5. `pay` verifies the webhook signature and syncs billing records.
+6. App-specific handlers in `config/initializers/pay_hooks.rb` update entitlements and log payment activity.
+
+### Payment-related env vars
+
+These are the payment vars the app expects in `.env`:
+
+```env
+PADDLE_BILLING_ENVIRONMENT=sandbox
+PADDLE_BILLING_API_KEY=pdl_sdbx_...
+PADDLE_BILLING_CLIENT_TOKEN=test_...
+PADDLE_BILLING_SIGNING_SECRET=pdl_ntfset_...
+PADDLE_PRICE_BASIC_MONTHLY=pri_...
+PADDLE_PRICE_PREMIUM_MONTHLY=pri_...
+```
+
+### Payment-related app pieces
+
+- `config/initializers/pay.rb` configures the `pay` gem
+- `config/initializers/pay_hooks.rb` handles Paddle subscription and transaction webhooks
+- `config/initializers/billing_plans.rb` maps local plans to Paddle price IDs
+- `app/services/billing/checkout_session_builder.rb` prepares checkout data
+- `app/services/billing/subscription_manager.rb` handles plan changes and cancellations
+- `app/services/billing/webhook_processor.rb` processes verified webhook events
+- `app/services/billing/payment_logger.rb` stores successful and failed transactions
+- `app/models/payment_transaction.rb` stores payment history
+- `app/models/webhook_event.rb` stores webhook idempotency records
+
+### Paddle products currently expected
+
+- `basic_monthly` -> `$12.00/month`
+- `premium_monthly` -> `$29.00/month`
+
+---
+
+## Testing Paddle Billing Locally With ngrok
+
+Paddle webhooks require a publicly accessible URL. Use [ngrok](https://ngrok.com) to tunnel your local Rails app while `PADDLE_BILLING_ENVIRONMENT=sandbox`.
+
+### 1. Install ngrok
+
+```bash
+brew install ngrok
+ngrok config add-authtoken <your-ngrok-token>
+```
+
+### 2. Start a tunnel
+
+```bash
+ngrok http 3000
+```
+
+Copy the HTTPS forwarding URL shown (e.g. `https://claudine-trailless-domingo.ngrok-free.dev`).
+
+The Rails development config already allows `*.ngrok-free.app`, `*.ngrok-free.dev`, and `*.ngrok.io` hosts.
+
+### 3. Configure Paddle sandbox
+
+In the [Paddle sandbox dashboard](https://sandbox-vendors.paddle.com):
+
+1. **Notification destination** — go to **Developer Tools → Notifications → New destination** and set the URL to:
+   ```
+   https://<your-ngrok-subdomain>.ngrok-free.dev/pay/webhooks/paddle_billing
+   ```
+   Copy the **Secret key** shown and set it in your `.env`:
+   ```env
+   PADDLE_BILLING_SIGNING_SECRET=pdl_ntfset_...
+   ```
+
+2. **Products** — go to **Catalog → Products** and create two products:
+   - **Video to Blog Basic** → price: $12.00, recurring monthly
+   - **Video to Blog Premium** → price: $29.00, recurring monthly
+
+   Copy each **Price ID** (`pri_...`) and set them in `.env`:
+   ```env
+   PADDLE_PRICE_BASIC_MONTHLY=pri_...
+   PADDLE_PRICE_PREMIUM_MONTHLY=pri_...
+   ```
+
+3. **Client token & API key** — go to **Developer Tools → Authentication**:
+   ```env
+   PADDLE_BILLING_CLIENT_TOKEN=test_...
+   PADDLE_BILLING_API_KEY=pdl_sdbx_...
+   PADDLE_BILLING_ENVIRONMENT=sandbox
+   ```
+
+4. **Default payment link** — set to `http://localhost:3000/dashboard` (used as a fallback; not required for overlay checkout).
+
+### 4. Start the app
+
+Run all payment-related processes locally:
+
+```bash
+bin/rails server
+bin/vite dev
+bundle exec sidekiq
+```
+
+### 5. Run a sandbox payment test
+
+1. Sign in locally at `http://localhost:3000`.
+2. Open the billing UI and start checkout for Basic or Premium.
+3. Complete the Paddle sandbox checkout flow.
+4. Confirm the webhook reaches your app through ngrok.
+
+Useful places to verify the test:
+
+- Rails logs should show the webhook hitting `/pay/webhooks/paddle_billing`
+- `pay` should create or update the customer/subscription records
+- `payment_transactions` should get a row for successful or failed payments
+- the billing/profile UI should show the updated plan and payment history
+
+### 6. Restart Rails after env changes
+
+```bash
+bin/rails server
+```
+
+If you changed Paddle env vars, restart Rails before testing again.
+
+Paddle sandbox webhooks will now reach your local app through the ngrok tunnel.
 
 ---
 

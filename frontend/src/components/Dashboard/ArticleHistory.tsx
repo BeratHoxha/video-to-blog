@@ -112,6 +112,7 @@ export function ArticleHistory({ onArticleOpen }: ArticleHistoryProps) {
             />
             <input
               type="text"
+              aria-label="Search articles"
               placeholder="Search articles…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}

@@ -1,5 +1,5 @@
 class Article < ApplicationRecord
-  WORD_LIMIT_ERROR_MARKER = "WORD_LIMIT_ERROR"
+  WORD_LIMIT_ERROR_MARKER = "WORD_LIMIT_ERROR".freeze
 
   belongs_to :user, optional: true
   has_one_attached :source_file

@@ -20,7 +20,7 @@ export function LandingPage({ authenticated }: LandingPageProps) {
     if (authenticated) {
       window.location.replace("/dashboard");
     }
-  }, []);
+  }, [authenticated]);
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -49,10 +49,7 @@ export function LandingPage({ authenticated }: LandingPageProps) {
             © {new Date().getFullYear()} Video To Blog. All rights reserved.
           </p>
           <p className="text-xs">
-            <a
-              href="/terms"
-              className="text-gray-600 hover:text-gray-400 transition-colors"
-            >
+            <a href="/terms" className="text-gray-600 hover:text-gray-400 transition-colors">
               Terms of Service &amp; Privacy Policy
             </a>
           </p>

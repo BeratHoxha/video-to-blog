@@ -147,8 +147,7 @@ export function ArticleEditor({
   }, [article.id]);
 
   const getCsrfToken = useMemo(
-    () => () =>
-      document.querySelector("meta[name='csrf-token']")?.getAttribute("content") ?? "",
+    () => () => document.querySelector("meta[name='csrf-token']")?.getAttribute("content") ?? "",
     []
   );
 
@@ -180,10 +179,7 @@ export function ArticleEditor({
       if (!readyToSaveRef.current) return;
       if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
       setSaveStatus("saving");
-      saveTimerRef.current = window.setTimeout(
-        () => patchContent(getHtml()),
-        1500
-      );
+      saveTimerRef.current = window.setTimeout(() => patchContent(getHtml()), 1500);
     },
     [patchContent]
   );
@@ -461,6 +457,7 @@ export function ArticleEditor({
               <input
                 ref={linkInputRef}
                 type="url"
+                aria-label="Link URL"
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
                 onKeyDown={(e) => {
@@ -575,9 +572,11 @@ export function ArticleEditor({
                 title="Insert image"
                 disabled={isUploadingImage}
               >
-                {isUploadingImage
-                  ? <Loader2 size={15} className="animate-spin" />
-                  : <ImagePlus size={15} />}
+                {isUploadingImage ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : (
+                  <ImagePlus size={15} />
+                )}
               </ToolbarButton>
 
               <div className="flex-1" />
@@ -643,7 +642,12 @@ export function ArticleEditor({
         {/* Editor content */}
         <div className="flex-1 overflow-y-auto px-12 py-8">
           <h1 className="text-3xl font-bold text-white mb-8">{article.title}</h1>
-          <div onClick={handleEditorClick}>
+          <div
+            onClick={handleEditorClick}
+            onKeyDown={handleEditorClick}
+            role="textbox"
+            tabIndex={0}
+          >
             <EditorContent editor={editor} />
           </div>
         </div>
@@ -652,6 +656,7 @@ export function ArticleEditor({
         <input
           ref={imageInputRef}
           type="file"
+          aria-label="Upload image"
           accept="image/*"
           className="hidden"
           onChange={handleImageFileChange}

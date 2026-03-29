@@ -31,7 +31,9 @@ export function Sidebar({ user }: SidebarProps) {
   }, []);
 
   function handleLogout() {
-    const csrf = (window as any).__RAILS_ENV__?.csrfToken ?? "";
+    const csrf =
+      (window as Window & { __RAILS_ENV__?: { csrfToken?: string } }).__RAILS_ENV__?.csrfToken ??
+      "";
     fetch("/users/sign_out", {
       method: "DELETE",
       headers: { "X-CSRF-Token": csrf },

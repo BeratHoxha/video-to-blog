@@ -8,11 +8,7 @@ export function DemoVideo() {
         <h2 className="text-3xl font-bold text-white mb-8">Watch how it works</h2>
 
         <div className="relative aspect-video bg-gray-900 border border-gray-700 rounded-2xl overflow-hidden">
-          <video
-            className="w-full h-full object-cover"
-            controls
-            preload="metadata"
-          >
+          <video className="w-full h-full object-cover" controls preload="metadata">
             <source src="/promo-video.mp4" type="video/mp4" />
           </video>
         </div>

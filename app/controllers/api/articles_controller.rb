@@ -37,12 +37,12 @@ module Api
 
       content = ExportService.call(article: @article, format: format)
       mime_types = {
-        "pdf"  => "application/pdf",
+        "pdf" => "application/pdf",
         "docx" => "application/vnd.openxmlformats-officedocument" \
                   ".wordprocessingml.document",
         "pptx" => "application/vnd.openxmlformats-officedocument" \
                   ".presentationml.presentation",
-        "txt"  => "text/plain"
+        "txt" => "text/plain"
       }
 
       send_data content,

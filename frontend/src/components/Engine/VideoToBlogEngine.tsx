@@ -36,7 +36,8 @@ export function VideoToBlogEngine({
   onUpgrade,
 }: VideoToBlogEngineProps) {
   const isOverLimit = typeof wordsRemaining === "number" && wordsRemaining <= 0;
-  const isLowOnWords = typeof wordsRemaining === "number" && wordsRemaining > 0 && wordsRemaining < 300;
+  const isLowOnWords =
+    typeof wordsRemaining === "number" && wordsRemaining > 0 && wordsRemaining < 300;
   const [inputMode, setInputMode] = useState<InputMode>("url");
   const [url, setUrl] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -170,9 +171,7 @@ export function VideoToBlogEngine({
           type="button"
           onClick={() => handleModeSwitch("url")}
           className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
-            inputMode === "url"
-              ? "bg-gray-700 text-white"
-              : "text-gray-400 hover:text-gray-300"
+            inputMode === "url" ? "bg-gray-700 text-white" : "text-gray-400 hover:text-gray-300"
           }`}
         >
           YouTube URL
@@ -181,9 +180,7 @@ export function VideoToBlogEngine({
           type="button"
           onClick={() => handleModeSwitch("file")}
           className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
-            inputMode === "file"
-              ? "bg-gray-700 text-white"
-              : "text-gray-400 hover:text-gray-300"
+            inputMode === "file" ? "bg-gray-700 text-white" : "text-gray-400 hover:text-gray-300"
           }`}
         >
           Upload Video
@@ -206,11 +203,7 @@ export function VideoToBlogEngine({
           </div>
         )}
 
-        <OptionsPanel
-          {...form}
-          authenticated={authenticated}
-          onChange={handleOptionChange}
-        />
+        <OptionsPanel {...form} authenticated={authenticated} onChange={handleOptionChange} />
 
         {error && (
           <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
