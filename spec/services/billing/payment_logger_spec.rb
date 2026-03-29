@@ -1,5 +1,4 @@
 require "rails_helper"
-require "ostruct"
 
 RSpec.describe Billing::PaymentLogger do
   let(:user) { create(:user, :basic) }
@@ -17,13 +16,13 @@ RSpec.describe Billing::PaymentLogger do
     end
 
     it "creates a success payment_transaction" do
-      expect {
+      expect do
         described_class.call(
           user: user,
           event_type: "transaction.completed",
           pay_object: pay_charge
         )
-      }.to change(PaymentTransaction, :count).by(1)
+      end.to change(PaymentTransaction, :count).by(1)
 
       txn = PaymentTransaction.last
       expect(txn.status).to eq("success")
@@ -43,38 +42,40 @@ RSpec.describe Billing::PaymentLogger do
       end
 
       it "does not raise and does not create a duplicate record" do
-        expect {
+        expect do
           described_class.call(
             user: user,
             event_type: "transaction.completed",
             pay_object: pay_charge
           )
-        }.not_to change(PaymentTransaction, :count)
+        end.not_to change(PaymentTransaction, :count)
       end
     end
   end
 
   describe ".call with transaction.payment_failed" do
     let(:raw_event) do
-      OpenStruct.new(
-        id: "txn_fail_001",
-        customer_id: "ctm_xyz",
-        subscription_id: "sub_001",
-        currency_code: "USD",
-        details: OpenStruct.new(totals: OpenStruct.new(total: 1200)),
-        payments: [OpenStruct.new(error_code: "card_declined")],
-        items: [OpenStruct.new(price: OpenStruct.new(id: "pri_basic_placeholder"))]
-      )
+      totals  = Struct.new(:total).new(1200)
+      details = Struct.new(:totals).new(totals)
+      payment = Struct.new(:error_code).new("card_declined")
+      price   = Struct.new(:id).new("pri_basic_placeholder")
+      item    = Struct.new(:price).new(price)
+
+      Struct.new(:id, :customer_id, :subscription_id, :currency_code,
+                 :details, :payments, :items).new(
+                   "txn_fail_001", "ctm_xyz", "sub_001", "USD",
+                   details, [payment], [item]
+                 )
     end
 
     it "creates a failed payment_transaction" do
-      expect {
+      expect do
         described_class.call(
           user: user,
           event_type: "transaction.payment_failed",
           pay_object: raw_event
         )
-      }.to change(PaymentTransaction, :count).by(1)
+      end.to change(PaymentTransaction, :count).by(1)
 
       txn = PaymentTransaction.last
       expect(txn.status).to eq("failed")
@@ -91,13 +92,13 @@ RSpec.describe Billing::PaymentLogger do
 
     it "logs a warning and does not raise" do
       allow(Rails.logger).to receive(:warn)
-      expect {
+      expect do
         described_class.call(
           user: nil,
           event_type: "transaction.completed",
           pay_object: pay_charge
         )
-      }.not_to change(PaymentTransaction, :count)
+      end.not_to change(PaymentTransaction, :count)
       expect(Rails.logger).to have_received(:warn).with(/txn_999/)
     end
   end

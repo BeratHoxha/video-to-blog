@@ -3,11 +3,23 @@ class ArticleGenerationJob < ApplicationJob
 
   def perform(article_id, user_tier: "guest")
     article = Article.find(article_id)
+    process_article(article, user_tier)
+  rescue TranscriptionService::TranscriptionError,
+         ArticleGenerationService::GenerationError,
+         StandardError => e
+    Rails.logger.error "ArticleGenerationJob failed for ##{article_id}: #{e.message}"
+    article&.source_file&.purge_later if article&.source_file&.attached?
+    article&.update!(status: :failed)
+    raise
+  end
 
+  private
+
+  def process_article(article, user_tier)
     # Guests get a 30-second audio trim so transcription is fast.
     trim_seconds = user_tier.to_s == "guest" ? 30 : nil
-    transcript = fetch_transcript(article, trim_seconds: trim_seconds)
-    word_limit = ArticleGenerationService::WORD_LIMITS[user_tier.to_sym]
+    transcript   = fetch_transcript(article, trim_seconds: trim_seconds)
+    word_limit   = ArticleGenerationService::WORD_LIMITS[user_tier.to_sym]
 
     content = ArticleGenerationService.call(
       transcript: transcript,
@@ -19,36 +31,12 @@ class ArticleGenerationJob < ApplicationJob
     content    = strip_leading_h1(content)
     word_count = content.gsub(/<[^>]+>/, " ").split.length
 
-    # For free users, if the generated article exceeds their remaining words,
-    # fail the article instead of saving a partial result.
-    if article.user&.free?
-      remaining = article.user.words_remaining.to_i
-      if word_count > remaining
-        article.update!(status: :failed, content: Article::WORD_LIMIT_ERROR_MARKER)
-        return
-      end
-    end
+    return if word_limit_exceeded?(article, word_count)
 
-    article.update!(
-      content: content,
-      title: title,
-      word_count: word_count,
-      status: :complete
-    )
-
+    article.update!(content: content, title: title, word_count: word_count, status: :complete)
     article.source_file.purge_later if article.source_file.attached?
-
     increment_user_word_usage(article, word_count)
-  rescue TranscriptionService::TranscriptionError,
-         ArticleGenerationService::GenerationError,
-         StandardError => e
-    Rails.logger.error "ArticleGenerationJob failed for ##{article_id}: #{e.message}"
-    article&.source_file&.purge_later if article&.source_file&.attached?
-    article&.update!(status: :failed)
-    raise
   end
-
-  private
 
   def fetch_transcript(article, trim_seconds: nil)
     if article.file? && article.source_file.attached?
@@ -69,6 +57,16 @@ class ArticleGenerationJob < ApplicationJob
     doc = Nokogiri::HTML.fragment(html)
     doc.at("h1")&.remove
     doc.to_html
+  end
+
+  def word_limit_exceeded?(article, word_count)
+    return false unless article.user&.free?
+
+    remaining = article.user.words_remaining.to_i
+    return false if word_count <= remaining
+
+    article.update!(status: :failed, content: Article::WORD_LIMIT_ERROR_MARKER)
+    true
   end
 
   def increment_user_word_usage(article, word_count)

@@ -32,9 +32,9 @@ RSpec.describe Billing::CheckoutSessionBuilder do
 
     context "with an unknown plan key" do
       it "raises KeyError" do
-        expect {
+        expect do
           described_class.call(user: user, plan_key: :unknown_plan)
-        }.to raise_error(KeyError)
+        end.to raise_error(KeyError)
       end
     end
   end

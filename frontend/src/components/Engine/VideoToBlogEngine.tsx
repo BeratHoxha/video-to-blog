@@ -15,7 +15,10 @@ interface VideoToBlogEngineProps {
   onUpgrade?: () => void;
 }
 
+type ContentMode = "article" | "summary";
+
 interface FormState {
+  contentMode: ContentMode;
   outputType: string;
   outputFormat: string;
   useExternalLinks: boolean;
@@ -33,7 +36,8 @@ export function VideoToBlogEngine({
   onUpgrade,
 }: VideoToBlogEngineProps) {
   const isOverLimit = typeof wordsRemaining === "number" && wordsRemaining <= 0;
-  const isLowOnWords = typeof wordsRemaining === "number" && wordsRemaining > 0 && wordsRemaining < 300;
+  const isLowOnWords =
+    typeof wordsRemaining === "number" && wordsRemaining > 0 && wordsRemaining < 300;
   const [inputMode, setInputMode] = useState<InputMode>("url");
   const [url, setUrl] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -41,6 +45,7 @@ export function VideoToBlogEngine({
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState<FormState>({
+    contentMode: "article",
     outputType: "Blog-Driven",
     outputFormat: "pdf",
     useExternalLinks: false,
@@ -102,6 +107,7 @@ export function VideoToBlogEngine({
         formData.append("source_file", selectedFile!);
       }
 
+      formData.append("content_mode", form.contentMode);
       formData.append("output_type", form.outputType);
       formData.append("output_format", form.outputFormat);
       formData.append("use_external_links", String(form.useExternalLinks));
@@ -165,9 +171,7 @@ export function VideoToBlogEngine({
           type="button"
           onClick={() => handleModeSwitch("url")}
           className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
-            inputMode === "url"
-              ? "bg-gray-700 text-white"
-              : "text-gray-400 hover:text-gray-300"
+            inputMode === "url" ? "bg-gray-700 text-white" : "text-gray-400 hover:text-gray-300"
           }`}
         >
           YouTube URL
@@ -176,9 +180,7 @@ export function VideoToBlogEngine({
           type="button"
           onClick={() => handleModeSwitch("file")}
           className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
-            inputMode === "file"
-              ? "bg-gray-700 text-white"
-              : "text-gray-400 hover:text-gray-300"
+            inputMode === "file" ? "bg-gray-700 text-white" : "text-gray-400 hover:text-gray-300"
           }`}
         >
           Upload Video
@@ -221,8 +223,10 @@ export function VideoToBlogEngine({
               <Loader2 size={16} className="animate-spin" />
               Generating...
             </>
+          ) : form.contentMode === "summary" ? (
+            "Summarise Video"
           ) : (
-            "Generate"
+            "Generate Article"
           )}
         </button>
       </form>

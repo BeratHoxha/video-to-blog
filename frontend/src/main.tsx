@@ -6,6 +6,7 @@ import { LandingPage } from "./pages/LandingPage";
 import { AuthPage } from "./pages/AuthPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { CheckEmailPage } from "./pages/CheckEmailPage";
+import { TermsPage } from "./pages/TermsPage";
 
 interface RailsEnv {
   currentUser?: unknown;
@@ -51,6 +52,16 @@ if (checkEmailRoot) {
   ReactDOM.createRoot(checkEmailRoot).render(
     <React.StrictMode>
       <CheckEmailPage />
+    </React.StrictMode>
+  );
+}
+
+// Terms page
+const termsRoot = document.getElementById("terms-root");
+if (termsRoot) {
+  ReactDOM.createRoot(termsRoot).render(
+    <React.StrictMode>
+      <TermsPage />
     </React.StrictMode>
   );
 }

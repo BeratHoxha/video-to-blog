@@ -1,7 +1,51 @@
+import { useState, useEffect } from "react";
 import { OUTPUT_TYPES, OUTPUT_FORMATS } from "@/lib/tokens";
 import { Lock } from "lucide-react";
 
+const INSTRUCTION_HINTS = [
+  "How many times was 'John Doe' mentioned?",
+  "What should I take away from this?",
+  "List every action item the speaker mentions",
+  "Explain this to a 10-year-old",
+  "What problems does the speaker claim this solves?",
+  "Focus only on the statistics and numbers",
+  "What questions are left unanswered?",
+  "Highlight any deadlines or dates mentioned",
+  "Write this for a non-technical audience",
+  "Extract every tool or product name mentioned",
+];
+
+function useTypingPlaceholder(phrases: string[]) {
+  const [text, setText] = useState("");
+  const [idx, setIdx] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const phrase = phrases[idx];
+
+    if (!deleting) {
+      if (text.length < phrase.length) {
+        const t = setTimeout(() => setText(phrase.slice(0, text.length + 1)), 55);
+        return () => clearTimeout(t);
+      }
+      const t = setTimeout(() => setDeleting(true), 1800);
+      return () => clearTimeout(t);
+    }
+
+    if (text.length > 0) {
+      const t = setTimeout(() => setText(text.slice(0, -1)), 28);
+      return () => clearTimeout(t);
+    }
+
+    setDeleting(false);
+    setIdx((i) => (i + 1) % phrases.length);
+  }, [text, deleting, idx, phrases]);
+
+  return text;
+}
+
 interface OptionsPanelProps {
+  contentMode: "article" | "summary";
   outputType: string;
   outputFormat: string;
   useExternalLinks: boolean;
@@ -11,6 +55,7 @@ interface OptionsPanelProps {
 }
 
 export function OptionsPanel({
+  contentMode,
   outputType,
   outputFormat,
   useExternalLinks,
@@ -18,29 +63,64 @@ export function OptionsPanel({
   authenticated,
   onChange,
 }: OptionsPanelProps) {
+  const isSummary = contentMode === "summary";
+  const hintPlaceholder = useTypingPlaceholder(INSTRUCTION_HINTS);
+
   return (
     <div className="space-y-5">
-      {/* Output Type */}
+      {/* Content Mode Toggle */}
       <div>
-        <label htmlFor="output-type" className="block text-sm font-medium text-gray-300 mb-1.5">
-          Output Type
-        </label>
-        <select
-          id="output-type"
-          value={outputType}
-          onChange={(e) => onChange("outputType", e.target.value)}
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg
+        <label className="block text-sm font-medium text-gray-300 mb-1.5">Output</label>
+        <div className="flex rounded-lg bg-gray-800 border border-gray-700 p-1 gap-1">
+          <button
+            type="button"
+            onClick={() => onChange("contentMode", "article")}
+            className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+              !isSummary ? "bg-emerald-500 text-white" : "text-gray-400 hover:text-gray-300"
+            }`}
+          >
+            Article
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange("contentMode", "summary")}
+            className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+              isSummary ? "bg-emerald-500 text-white" : "text-gray-400 hover:text-gray-300"
+            }`}
+          >
+            Summary
+          </button>
+        </div>
+        {isSummary && (
+          <p className="mt-1.5 text-xs text-gray-500">
+            Generates a concise overview with key points — great for quick comprehension.
+          </p>
+        )}
+      </div>
+
+      {/* Output Type — hidden in summary mode */}
+      {!isSummary && (
+        <div>
+          <label htmlFor="output-type" className="block text-sm font-medium text-gray-300 mb-1.5">
+            Output Type
+          </label>
+          <select
+            id="output-type"
+            value={outputType}
+            onChange={(e) => onChange("outputType", e.target.value)}
+            className="w-full bg-gray-800 border border-gray-700 rounded-lg
                      px-3 py-2.5 text-white text-sm
                      focus:outline-none focus:ring-2 focus:ring-emerald-500/50
                      focus:border-emerald-500 transition-colors"
-        >
-          {OUTPUT_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-      </div>
+          >
+            {OUTPUT_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Output Format */}
       <div>
@@ -94,7 +174,7 @@ export function OptionsPanel({
           aria-label="Additional instructions"
           value={additionalInstructions}
           onChange={(e) => onChange("additionalInstructions", e.target.value)}
-          placeholder="e.g. Focus on technical depth, include code examples..."
+          placeholder={hintPlaceholder || " "}
           rows={3}
           className="w-full bg-gray-800 border border-gray-700 rounded-lg
                      px-3 py-2.5 text-white text-sm placeholder-gray-600

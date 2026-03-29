@@ -38,7 +38,7 @@ RSpec.describe "Settings::Billing", type: :request do
         get "/settings/billing"
         json = response.parsed_body
 
-        expect(json["available_plans"].map { |p| p["key"] })
+        expect(json["available_plans"].pluck("key"))
           .to include("basic_monthly", "premium_monthly")
       end
     end

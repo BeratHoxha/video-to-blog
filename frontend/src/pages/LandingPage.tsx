@@ -44,9 +44,14 @@ export function LandingPage({ authenticated }: LandingPageProps) {
         <NewsletterSignup />
 
         {/* Footer */}
-        <footer className="border-t border-gray-800 py-8 px-4 text-center">
+        <footer className="border-t border-gray-800 py-8 px-4 text-center space-y-2">
           <p className="text-xs text-gray-700">
             © {new Date().getFullYear()} Video To Blog. All rights reserved.
+          </p>
+          <p className="text-xs">
+            <a href="/terms" className="text-gray-600 hover:text-gray-400 transition-colors">
+              Terms of Service &amp; Privacy Policy
+            </a>
           </p>
         </footer>
       </main>

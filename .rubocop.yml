@@ -40,8 +40,19 @@ Metrics/MethodLength:
 Metrics/AbcSize:
   Max: 30
 
+Metrics/CyclomaticComplexity:
+  Exclude:
+    - "app/controllers/api/generations_controller.rb"
+
 Metrics/ClassLength:
   Max: 250
+  Exclude:
+    - "app/services/pptx_builder_service.rb"
+    - "app/services/export_service.rb"
+
+Metrics/ParameterLists:
+  Exclude:
+    - "app/services/pptx_builder_service.rb"
 
 Metrics/BlockLength:
   Max: 35
@@ -52,7 +63,7 @@ Metrics/BlockLength:
 
 # Allow e, id as short param names
 Naming/MethodParameterName:
-  AllowedNames: [e, id, io, on, to, by, as]
+  AllowedNames: [e, id, io, on, to, by, as, x, y, cx, cy, sz]
 
 # Enforce double quotes for consistency with JS
 Style/StringLiterals:

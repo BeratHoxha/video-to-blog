@@ -49,7 +49,8 @@ class ArticleGenerationService
   def call
     # Fetch real external links before building the prompt so system_prompt
     # can embed them. Assigned to an ivar to avoid double-fetching.
-    @external_links = @options[:use_external_links] ? fetch_external_links : []
+    # External links are only used in article mode.
+    @external_links = !summary? && @options[:use_external_links] ? fetch_external_links : []
 
     # When a word limit is set, cap max_tokens so the model stops early
     # rather than generating a full article and truncating after.
@@ -72,7 +73,45 @@ class ArticleGenerationService
 
   private
 
+  def summary?
+    @options[:content_mode].to_s == "summary"
+  end
+
   def system_prompt
+    summary? ? summary_system_prompt : article_system_prompt
+  end
+
+  def summary_system_prompt
+    instructions = []
+
+    instructions << "Additional instructions: #{@options[:additional_instructions]}" \
+      if @options[:additional_instructions].present?
+
+    extra = instructions.any? ? "\n\n#{instructions.join("\n")}" : ""
+
+    <<~PROMPT
+      You are an expert at distilling video content into clear, concise summaries.
+      Convert the provided video transcript into a structured summary.
+
+      Constraints:
+      - Use only information contained in the transcript.
+      - Do not invent facts or add unsupported details.
+      - Be concise — capture key points without padding.
+
+      Structure the summary as:
+      1. An H1 title describing the video topic.
+      2. A short intro paragraph (2-3 sentences) covering the main subject.
+      3. A "Key Points" section (h2) with a bullet list of the most important
+         takeaways (5-10 bullets).
+      4. A brief "Conclusion" section (h2) summarising the outcome or message.#{extra}
+
+      Format the output as HTML using h1, h2, p, and ul/li tags.
+      Do not include any markdown — use HTML only.
+      Return only the summary content.
+    PROMPT
+  end
+
+  def article_system_prompt
     style = OUTPUT_TYPE_PROMPTS[@options[:output_type]] ||
             OUTPUT_TYPE_PROMPTS["Blog-Driven"]
 
@@ -122,8 +161,13 @@ class ArticleGenerationService
   end
 
   def user_prompt
-    limit_note = @word_limit ? " Keep the article under #{@word_limit} words." : ""
-    "Convert this transcript into a blog article.#{limit_note}\n\n#{@transcript}"
+    if summary?
+      limit_note = @word_limit ? " Keep the summary under #{@word_limit} words." : ""
+      "Summarise this transcript.#{limit_note}\n\n#{@transcript}"
+    else
+      limit_note = @word_limit ? " Keep the article under #{@word_limit} words." : ""
+      "Convert this transcript into a blog article.#{limit_note}\n\n#{@transcript}"
+    end
   end
 
   def apply_word_limit(content)
@@ -163,7 +207,7 @@ class ArticleGenerationService
       max_tokens: 60
     )
 
-    queries = queries_text.split("\n").map(&:strip).reject(&:blank?).first(2)
+    queries = queries_text.split("\n").map(&:strip).compact_blank.first(2)
 
     results = queries.flat_map do |query|
       GoogleSearchService.search(query: query, num: 3)

@@ -1,5 +1,5 @@
 class Article < ApplicationRecord
-  WORD_LIMIT_ERROR_MARKER = "WORD_LIMIT_ERROR"
+  WORD_LIMIT_ERROR_MARKER = "WORD_LIMIT_ERROR".freeze
 
   belongs_to :user, optional: true
   has_one_attached :source_file
@@ -18,6 +18,7 @@ class Article < ApplicationRecord
 
   def generation_options
     {
+      content_mode: content_mode,
       output_type: output_type,
       output_format: output_format,
       include_images: include_images,
@@ -33,6 +34,7 @@ class Article < ApplicationRecord
       content: content,
       source_url: source_url,
       source_type: source_type,
+      content_mode: content_mode,
       output_type: output_type,
       output_format: output_format,
       include_images: include_images,

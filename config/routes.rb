@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   root "pages#home"
+  get "/terms", to: "pages#terms"
 
   # Billing (Paddle Checkout + subscription lifecycle)
   post "/billing/checkout",     to: "billing#checkout"
@@ -10,7 +11,7 @@ Rails.application.routes.draw do
   namespace :settings do
     get "/billing", to: "billing#show"
   end
-  # Note: Pay::Engine is auto-mounted at /pay by pay gem (Pay.automount_routes = true)
+  # NOTE: Pay::Engine is auto-mounted at /pay by pay gem (Pay.automount_routes = true)
 
   devise_for :users, controllers: {
     omniauth_callbacks: "users/omniauth_callbacks",

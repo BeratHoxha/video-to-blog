@@ -15,8 +15,8 @@ gem "tzinfo-data", platforms: %i[mingw mswin x64_mingw jruby]
 gem "vite_rails"
 
 # Billing
-gem "pay", "~> 7.0"
 gem "paddle", "~> 2.1"
+gem "pay", "~> 7.0"
 
 # Auth
 gem "devise"
