@@ -81,6 +81,4 @@ test:
 #
 production:
   <<: *default
-  database: video_to_blog_production
-  username: video_to_blog
-  password: <%= ENV["VIDEO_TO_BLOG_DATABASE_PASSWORD"] %>
+  url: <%= ENV["DATABASE_URL"] %>

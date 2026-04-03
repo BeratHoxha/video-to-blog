@@ -26,6 +26,7 @@ export function useBilling() {
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);
 
   const fetchBillingInfo = useCallback(async () => {
@@ -116,25 +117,29 @@ export function useBilling() {
 
   const cancelSubscription = useCallback(async () => {
     setError(null);
+    setMessage(null);
     try {
       const res = await fetch("/billing/cancel", {
         method: "POST",
         headers: { "X-CSRF-Token": csrfToken },
       });
+      const data = await res.json();
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || "Cancel failed");
       }
+      setMessage(data.message ?? "Subscription cancelled.");
+      await fetchBillingInfo();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     }
-  }, [csrfToken]);
+  }, [csrfToken, fetchBillingInfo]);
 
   return {
     billingInfo,
     loading,
     processing,
     error,
+    message,
     fetchBillingInfo,
     startCheckout,
     changePlan,

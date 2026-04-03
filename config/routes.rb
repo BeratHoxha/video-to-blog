@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  # Health check — used by load balancers and deployment systems
+  get "/health", to: proc { [200, { "Content-Type" => "text/plain" }, ["ok"]] }
+
   root "pages#home"
   get "/terms", to: "pages#terms"
 

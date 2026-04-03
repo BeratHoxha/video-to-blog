@@ -302,6 +302,7 @@ function PlanTab({ user }: { user: User }) {
     loading,
     processing,
     error,
+    message,
     fetchBillingInfo,
     startCheckout,
     cancelSubscription,
@@ -319,6 +320,11 @@ function PlanTab({ user }: { user: User }) {
       {error && (
         <p className="text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-3">
           {error}
+        </p>
+      )}
+      {message && (
+        <p className="text-sm text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-lg px-4 py-3">
+          {message}
         </p>
       )}
       {processing && (

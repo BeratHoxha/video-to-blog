@@ -2,7 +2,6 @@ class Article < ApplicationRecord
   WORD_LIMIT_ERROR_MARKER = "WORD_LIMIT_ERROR".freeze
 
   belongs_to :user, optional: true
-  has_one_attached :source_file
 
   enum :status, { processing: 0, complete: 1, failed: 2 }
   enum :source_type, { url: 0, file: 1 }

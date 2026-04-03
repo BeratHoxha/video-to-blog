@@ -108,7 +108,7 @@ module Billing
       if ends_at.present?
         blog(:info, "Applying subscription.canceled (period end)",
              user_id: @user.id, access_until: ends_at)
-        @user.update!(plan_status: :active, plan_expires_at: ends_at)
+        @user.update!(plan_status: :canceled, plan_expires_at: ends_at)
       else
         blog(:info, "Applying subscription.canceled (immediate)",
              user_id: @user.id)

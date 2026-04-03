@@ -1,24 +1,25 @@
 class ArticleGenerationJob < ApplicationJob
   queue_as :default
 
-  def perform(article_id, user_tier: "guest")
+  def perform(article_id, user_tier: "guest", temp_file_path: nil)
     article = Article.find(article_id)
-    process_article(article, user_tier)
+    process_article(article, user_tier, temp_file_path)
   rescue TranscriptionService::TranscriptionError,
          ArticleGenerationService::GenerationError,
          StandardError => e
     Rails.logger.error "ArticleGenerationJob failed for ##{article_id}: #{e.message}"
-    article&.source_file&.purge_later if article&.source_file&.attached?
+    delete_temp_file(temp_file_path)
     article&.update!(status: :failed)
     raise
   end
 
   private
 
-  def process_article(article, user_tier)
+  def process_article(article, user_tier, temp_file_path)
     # Guests get a 30-second audio trim so transcription is fast.
     trim_seconds = user_tier.to_s == "guest" ? 30 : nil
-    transcript   = fetch_transcript(article, trim_seconds: trim_seconds)
+    transcript   = fetch_transcript(article, temp_file_path: temp_file_path,
+                                             trim_seconds: trim_seconds)
     word_limit   = ArticleGenerationService::WORD_LIMITS[user_tier.to_sym]
 
     content = ArticleGenerationService.call(
@@ -34,18 +35,21 @@ class ArticleGenerationJob < ApplicationJob
     return if word_limit_exceeded?(article, word_count)
 
     article.update!(content: content, title: title, word_count: word_count, status: :complete)
-    article.source_file.purge_later if article.source_file.attached?
     increment_user_word_usage(article, word_count)
   end
 
-  def fetch_transcript(article, trim_seconds: nil)
-    if article.file? && article.source_file.attached?
-      article.source_file.open do |tempfile|
-        TranscriptionService.call(file_path: tempfile.path, trim_seconds: trim_seconds)
-      end
+  def fetch_transcript(article, temp_file_path:, trim_seconds: nil)
+    if article.file?
+      TranscriptionService.call(file_path: temp_file_path, trim_seconds: trim_seconds)
     else
       TranscriptionService.call(source_url: article.source_url, trim_seconds: trim_seconds)
     end
+  ensure
+    delete_temp_file(temp_file_path)
+  end
+
+  def delete_temp_file(path)
+    File.delete(path) if path && File.exist?(path)
   end
 
   def extract_title(html)

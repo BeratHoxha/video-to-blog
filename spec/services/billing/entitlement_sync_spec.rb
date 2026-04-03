@@ -74,7 +74,7 @@ RSpec.describe Billing::EntitlementSync do
 
       before { user.update!(plan: :basic, plan_status: :active) }
 
-      it "keeps plan_status active and sets plan_expires_at" do
+      it "sets plan_status to canceled and sets plan_expires_at" do
         described_class.call(
           user: user,
           event_type: "subscription.canceled",
@@ -82,7 +82,7 @@ RSpec.describe Billing::EntitlementSync do
         )
 
         user.reload
-        expect(user.plan_status).to eq("active")
+        expect(user.plan_status).to eq("canceled")
         expect(user.plan_expires_at).to be_within(1.second).of(expires)
       end
     end

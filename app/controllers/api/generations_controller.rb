@@ -12,9 +12,9 @@ module Api
       check_word_limit!
       return if performed?
 
-      article = Article.create!(build_article_attrs)
-      attach_source_file!(article)
-      enqueue_generation!(article, current_user&.plan || "guest")
+      article   = Article.create!(build_article_attrs)
+      temp_path = stash_uploaded_file
+      enqueue_generation!(article, current_user&.plan || "guest", temp_path)
 
       render json: { article_id: article.id, status: "processing" }, status: :created
     rescue ActiveRecord::RecordInvalid => e
@@ -81,22 +81,30 @@ module Api
       ActiveModel::Type::Boolean.new.cast(value) || false
     end
 
-    def attach_source_file!(article)
-      return if params[:source_file].blank?
+    # Copy the upload to a standalone tempfile so it survives past the request.
+    # Returns nil when the request contains a URL instead of a file.
+    def stash_uploaded_file
+      return nil if params[:source_file].blank?
 
-      article.source_file.attach(
-        io: params[:source_file],
-        filename: params[:source_file].original_filename,
-        content_type: params[:source_file].content_type
-      )
+      upload = params[:source_file]
+      ext    = File.extname(upload.original_filename.to_s)
+      tmp    = Tempfile.new(["vtb_upload", ext])
+      tmp.binmode
+      IO.copy_stream(upload.tempfile, tmp)
+      tmp.close # keep on disk; the job deletes it after transcription
+      tmp.path
     end
 
-    def enqueue_generation!(article, user_tier)
+    def enqueue_generation!(article, user_tier, temp_file_path)
       # Run generation in a background thread so the response returns immediately.
       # The frontend polls /api/articles/:id/status until the job completes.
       Thread.new do
         Rails.application.executor.wrap do
-          ArticleGenerationJob.perform_now(article.id, user_tier: user_tier)
+          ArticleGenerationJob.perform_now(
+            article.id,
+            user_tier: user_tier,
+            temp_file_path: temp_file_path
+          )
         end
       end
     end
