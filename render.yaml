@@ -1,7 +1,7 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
-# Defines all services. Connect your GitHub repo to Render and it reads this
-# file automatically — database, Redis, web server, and worker are all created
-# for you in one click.
+# Free tier: web service + PostgreSQL only.
+# Article generation runs in a background thread inside the web process
+# (perform_now inside Thread.new), so Sidekiq and Redis are not needed.
 
 services:
   # ── Web (Rails + Puma) ───────────────────────────────────────────────────────
@@ -29,11 +29,6 @@ services:
       - key: DATABASE_URL
         fromDatabase:
           name: videoblog-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          name: videoblog-redis
-          type: redis
           property: connectionString
       # ── You fill these in the Render dashboard ───────────────────────────────
       - key: AWS_ACCESS_KEY_ID
@@ -85,48 +80,8 @@ services:
       - key: FRONTEND_ORIGIN
         sync: false
 
-  # ── Sidekiq background worker ─────────────────────────────────────────────────
-  - type: worker
-    name: videoblog-worker
-    runtime: ruby
-    region: oregon
-    plan: starter
-    buildCommand: "bundle install"
-    startCommand: "bundle exec sidekiq"
-    envVars:
-      - key: RAILS_ENV
-        value: production
-      - key: RAILS_LOG_TO_STDOUT
-        value: "true"
-      - key: SECRET_KEY_BASE
-        fromService:
-          name: videoblog-web
-          type: web
-          envVarKey: SECRET_KEY_BASE
-      - key: DATABASE_URL
-        fromDatabase:
-          name: videoblog-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          name: videoblog-redis
-          type: redis
-          property: connectionString
-      - key: OPENAI_API_KEY
-        fromService:
-          name: videoblog-web
-          type: web
-          envVarKey: OPENAI_API_KEY
-
-  # ── Redis ─────────────────────────────────────────────────────────────────────
-  - type: redis
-    name: videoblog-redis
-    region: oregon
-    plan: starter
-    ipAllowList: []
-
 # ── PostgreSQL ────────────────────────────────────────────────────────────────
 databases:
   - name: videoblog-db
     region: oregon
-    plan: starter
+    plan: free
