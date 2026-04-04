@@ -48,6 +48,11 @@ Rails.application.configure do
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   config.force_ssl = true
 
+  # Trust Render's load balancer so Rails reads X-Forwarded-Proto correctly
+  # and does not redirect HTTPS requests arriving as HTTP internally.
+  config.action_dispatch.trusted_proxies =
+    ActionDispatch::RemoteIp::TRUSTED_PROXIES + ["0.0.0.0/0"]
+
   # Include generic and useful information about system operation, but avoid logging too much
   # information to avoid inadvertent exposure of personally identifiable information (PII).
   config.log_level = :info
