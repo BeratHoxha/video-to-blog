@@ -20,6 +20,11 @@ class User < ApplicationRecord
   AI_BOT_WEEKLY_LIMIT = 10
   FREE_WORD_LIMIT = 2000
 
+  # Deliver all Devise emails asynchronously so they don't block HTTP responses.
+  def send_devise_notification(notification, *)
+    devise_mailer.send(notification, self, *).deliver_later
+  end
+
   def ai_bot_calls_remaining
     limit = Billing::EntitlementManager.new(self).ai_bot_limit
     return nil if limit.nil?
