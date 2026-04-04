@@ -1,5 +1,7 @@
 module Users
   class SessionsController < Devise::SessionsController
+    skip_before_action :verify_authenticity_token, if: -> { request.format.json? }
+
     def create
       credential_errors = validate_credentials
       return render_credential_errors(credential_errors) if credential_errors.any?
