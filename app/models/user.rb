@@ -1,7 +1,7 @@
 class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable,
-         :confirmable, :omniauthable, omniauth_providers: %i[google_oauth2 github]
+         :confirmable
 
   pay_customer
 
@@ -19,17 +19,6 @@ class User < ApplicationRecord
 
   AI_BOT_WEEKLY_LIMIT = 10
   FREE_WORD_LIMIT = 2000
-
-  def self.from_omniauth(auth)
-    where(provider: auth.provider, uid: auth.uid).first_or_create do |user|
-      user.email = auth.info.email
-      user.password = Devise.friendly_token[0, 20]
-      user.name = auth.info.name
-      user.provider = auth.provider
-      user.uid = auth.uid
-      user.skip_confirmation! # OAuth identity is already verified
-    end
-  end
 
   def ai_bot_calls_remaining
     limit = Billing::EntitlementManager.new(self).ai_bot_limit

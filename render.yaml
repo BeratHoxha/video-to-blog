@@ -41,14 +41,6 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
-      - key: GOOGLE_CLIENT_ID
-        sync: false
-      - key: GOOGLE_CLIENT_SECRET
-        sync: false
-      - key: GITHUB_CLIENT_ID
-        sync: false
-      - key: GITHUB_CLIENT_SECRET
-        sync: false
       - key: GOOGLE_CUSTOM_SEARCH_API_KEY
         sync: false
       - key: GOOGLE_CUSTOM_SEARCH_ENGINE_ID

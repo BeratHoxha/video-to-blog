@@ -17,7 +17,6 @@ Rails.application.routes.draw do
   # NOTE: Pay::Engine is auto-mounted at /pay by pay gem (Pay.automount_routes = true)
 
   devise_for :users, controllers: {
-    omniauth_callbacks: "users/omniauth_callbacks",
     registrations: "users/registrations",
     sessions: "users/sessions",
     confirmations: "users/confirmations"

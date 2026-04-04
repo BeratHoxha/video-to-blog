@@ -20,10 +20,6 @@ gem "pay", "~> 7.0"
 
 # Auth
 gem "devise"
-gem "omniauth"
-gem "omniauth-github", "~> 1.4"
-gem "omniauth-google-oauth2"
-gem "omniauth-rails_csrf_protection"
 
 # Background jobs
 gem "redis", "~> 4.0"
